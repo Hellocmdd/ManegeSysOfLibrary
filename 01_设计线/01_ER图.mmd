@@ -1,0 +1,81 @@
+%% 图书管理系统 · ER 图源文件（Mermaid 语法）
+%% 使用方式：
+%%   1. VSCode 安装插件 "Markdown Preview Mermaid Support"，F11 预览
+%%   2. 或粘贴到 https://mermaid.live 在线预览
+%%   3. 或导入 draw.io（.xml 格式导出）
+%% 作者：张展博 · 2026-11-25
+%% 最终应导出为 01_ER图.png
+
+erDiagram
+    %% ===== 实体 =====
+    READER {
+        string reader_id PK "读者编号(20243021xxx)"
+        string name        "姓名"
+        string sex         "性别(男/女)"
+        string phone       "联系电话"
+        string email       "邮箱"
+        date   reg_date    "注册日期"
+        int    status      "账户状态 1正常/0禁用"
+    }
+
+    ADMIN {
+        string admin_id PK "管理员编号"
+        string name        "姓名"
+        string account     "登录账号"
+        string pwd         "密码(哈希存储)"
+        string role        "角色 普通/超级"
+    }
+
+    BOOK {
+        string book_id    PK "书籍编号"
+        string isbn        "ISBN 国际标准书号"
+        string title       "书名"
+        string author      "作者"
+        string publisher   "出版社"
+        date   pub_date    "出版日期"
+        text   descr       "简介/目录"
+        string cat_id     FK "分类编号 → CATEGORY.cat_id"
+    }
+
+    COPY {
+        string copy_id    PK "副本编号"
+        string book_id    FK "书籍编号 → BOOK.book_id"
+        string asset_no    "馆藏编号(贴书上的标签号)"
+        string location    "存放位置(如 二楼A区-03架)"
+        int    is_available "是否在馆 1是/0否"
+    }
+
+    CATEGORY {
+        string cat_id     PK "分类编号"
+        string cat_name    "分类名(如 计算机)"
+        string parent_id  FK "父分类编号(根节点为 NULL, 自引用)"
+    }
+
+    BORROW {
+        string borrow_id  PK "借阅记录编号"
+        string reader_id  FK "读者编号 → READER.reader_id"
+        string copy_id    FK "副本编号 → COPY.copy_id"
+        date   borrow_date "借出日期"
+        date   due_date    "应还日期(一般为借出+30天)"
+        date   return_date "实际归还日期(可空, 空=尚未归还)"
+        string status      "状态 在借/已归还/已逾期"
+        int    is_overdue  "是否逾期 1是/0否(冗余字段, 触发器自动维护)"
+        string admin_id   FK "处理归还的管理员(可空) → ADMIN.admin_id"
+        datetime handle_time "处理时间(可空)"
+    }
+
+    %% ===== 联系 =====
+    %% 基数说明：||--o{ 表示 1:N，||--|| 表示 1:1
+    READER  ||--o{ BORROW  : "发起借阅(1:N)"
+    ADMIN   ||--o{ BORROW  : "处理归还(1:N, 可空)"
+    BOOK    ||--o{ COPY    : "拥有副本(1:N)"
+    CATEGORY ||--o{ BOOK   : "分类归属(1:N)"
+    CATEGORY ||--o{ CATEGORY : "父子分类(自引用)"
+    COPY    ||--o{ BORROW  : "被借阅(1:N, 但运行中只能有一条)"
+
+%% ===== 业务规则说明 =====
+%% 1. 同一副本同一时间最多只有一条未归还的 BORROW 记录（is_overdue=0）
+%%    → 在 COPY 表的 is_available 字段 + 事务中双重校验
+%% 2. 读者同时借阅数量上限（如 5 本） → 应用层校验
+%% 3. 分类支持多级 → CATEGORY.parent_id 自引用
+%% 4. 书籍副本是借书的实际对象，BOOK 存书名等共享信息

@@ -1,0 +1,33 @@
+# ========== 数据库大作业 .gitignore ==========
+
+# 操作系统
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 数据库（备份文件）
+*.bak
+*.sql.bak
+
+# 凭据（绝对不能提交）
+.env
+*.env
+config_secret.py
+
+# 临时文件
+*.tmp
+*.log
