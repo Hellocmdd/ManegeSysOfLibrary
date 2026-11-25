@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}图书管理系统{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="{{ url_for('book_list') }}">图书管理系统</a>
+    {% if session.get("admin_id") %}
+    <nav class="nav">
+      <a href="{{ url_for('book_list') }}">书目查询</a>
+      <a href="{{ url_for('reports') }}">统计报表</a>
+    </nav>
+    <div class="who">
+      <span class="who-name">{{ session.get("admin_name") }}</span>
+      <span class="who-role">{{ session.get("admin_role") }}</span>
+      <a class="logout" href="{{ url_for('logout') }}">退出</a>
+    </div>
+    {% endif %}
+  </header>
+
+  <main class="container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+      <ul class="flash">
+        {% for category, message in messages %}
+        <li class="flash-{{ category }}">{{ message }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    数据库课程设计 · 图书管理系统 · Flask + Jinja2 + 原生 CSS
+  </footer>
+</body>
+</html>

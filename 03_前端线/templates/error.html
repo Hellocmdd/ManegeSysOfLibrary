@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}出错了 · 图书管理系统{% endblock %}
+
+{% block content %}
+<section class="card error-card">
+  <h1>页面暂时不可用</h1>
+  <p class="error-message">{{ message }}</p>
+  {% if code %}
+  <p class="hint mono">错误码：{{ code }}</p>
+  {% endif %}
+  <ul class="hint">
+    <li>确认 MySQL 已启动，且 <span class="mono">library_system</span> 库已按 <span class="mono">02_后端线</span> 的脚本建好。</li>
+    <li>数据库账号密码通过环境变量 <span class="mono">DB_USER</span> / <span class="mono">DB_PASSWORD</span> 配置。</li>
+    <li>若提示"未知列"或"表不存在"，说明后端线的 <span class="mono">04_init.sql</span> 还没补齐。</li>
+  </ul>
+  <a class="btn btn-primary" href="{{ url_for('book_list') }}">返回书目列表</a>
+</section>
+{% endblock %}
