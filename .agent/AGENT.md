@@ -19,7 +19,7 @@ src/backend/sql  04_init.sql（建库建表）→ 05_存储过程.sql（借/还/
 src/frontend  Flask + Jinja2 + 原生 HTML/CSS → 登录 → 书目查询 → 借还续借 → 4 张统计报表 → 截图归档
 ```
 
-技术栈：MySQL 8.0+（InnoDB、utf8mb4；本地 Docker 8.4 / 远程 9.7.2）· Python 3.11 · Flask · `mysql-connector-python`（或 `PyMySQL`）· Jinja2 · 原生 HTML/CSS。**不用 ORM，SQL 直接写在 Python 里**——这是课程要展示 SQL 功底的地方，不要用 ORM 把它藏起来。
+技术栈：MySQL 8.0+（InnoDB、utf8mb4；本地 Docker 8.4 / 远程 9.7.2）· Python 3.10+（一键脚本优先 `py -3.10`，退 `py -3.11`、`py -3`）· Flask · **PyMySQL**（纯 Python，`cursor.nextset()` 接得住存储过程的多结果集）· Jinja2 · 原生 HTML/CSS。**不用 ORM，SQL 直接写在 Python 里**——这是课程要展示 SQL 功底的地方，不要用 ORM 把它藏起来。远程库经 Tailscale 内网访问，连接参数只放在本地 `.env`。
 
 ### 六张表（以 `docs/03_数据库逻辑设计/02_关系模式.md` 与 `src/backend/sql/04_init.sql` 为准）
 

@@ -12,14 +12,16 @@ set "PIP_ALIYUN=https://mirrors.aliyun.com/pypi/simple"
 echo == Library frontend launcher (src/frontend) ==
 
 if not exist "%VENV_PY%" goto :make_venv
-echo [1/3] venv found, skip creation
+echo [1/4] venv found, skip creation
 goto :check_pip
 
 :make_venv
-echo [1/3] creating venv .venv with py -3.11 ...
+echo [1/4] creating venv .venv with py -3.10 ...
+py -3.10 -m venv "%VENV%" >nul 2>&1
+if not errorlevel 1 goto :check_pip
+echo     py -3.10 not found, trying py -3.11 ...
 py -3.11 -m venv "%VENV%"
-if errorlevel 1 goto :try_py3
-goto :check_pip
+if not errorlevel 1 goto :check_pip
 
 :try_py3
 echo     py -3.11 not found, trying py -3 ...
@@ -43,7 +45,7 @@ uv venv --seed "%VENV%"
 if errorlevel 1 goto :no_pip
 
 :check_deps
-echo [2/3] checking dependencies ...
+echo [2/4] checking dependencies ...
 "%VENV_PY%" -c "import flask, pymysql" >nul 2>&1
 if not errorlevel 1 goto :check_env
 echo     installing from Tsinghua mirror ...
@@ -57,22 +59,37 @@ if not errorlevel 1 goto :check_env
 echo     Aliyun failed, trying PyPI ...
 set "PIP_INDEX_URL="
 "%VENV_PY%" -m pip install --disable-pip-version-check -q -r requirements.txt
+if not errorlevel 1 goto :check_env
+echo     HTTPS blocked (old pip + local TLS proxy), retrying over plain HTTP ...
+set "PIP_INDEX_URL=http://mirrors.aliyun.com/pypi/simple"
+set "PIP_TRUSTED_HOST=mirrors.aliyun.com"
+"%VENV_PY%" -m pip install --disable-pip-version-check -q -r requirements.txt
 if errorlevel 1 goto :fail_pip
+set "PIP_INDEX_URL="
+set "PIP_TRUSTED_HOST="
 
 :check_env
-if exist "..\..\.env" goto :run
-if not exist "..\..\.env.example" goto :run
+if exist "..\..\.env" goto :check_db
+if not exist "..\..\.env.example" goto :check_db
 copy /y "..\..\.env.example" "..\..\.env" >nul
 echo [hint] created repo root .env from .env.example; fill DB_PASSWORD before connecting
 
+:check_db
+echo [3/4] checking database connection ...
+"%VENV_PY%" -c "from db import check_connection; check_connection()" >nul 2>&1
+if not errorlevel 1 goto :run
+echo     [warn] database unreachable. Check Tailscale login, Clash proxy for
+echo            100.64.0.0/10, and DB_* values in the repo root .env.
+echo     [warn] the app still starts, pages will show the error page.
+
 :run
-echo [3/3] starting on http://127.0.0.1:5000  press Ctrl+C to stop
+echo [4/4] starting on http://127.0.0.1:5000  press Ctrl+C to stop
 "%VENV_PY%" app.py
 goto :eof
 
 :fail_venv
 echo.
-echo Failed to create the venv. Check Python: py -3.11 --version
+echo Failed to create the venv. Check Python 3.10: py -3.10 --version
 pause
 exit /b 1
 

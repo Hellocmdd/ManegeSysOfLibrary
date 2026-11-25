@@ -56,6 +56,8 @@ def _translate(exc: pymysql.err.MySQLError) -> DbError:
         return DbError("数据库字段尚未就绪（未知列），需后端线补齐 04_init.sql。", code)
     if code == 1146:
         return DbError("数据表不存在，请先执行 src/backend/sql/04_init.sql。", code)
+    if code in (2006, 2013):
+        return DbError("数据库连接已断开，请检查网络或 Tailscale 是否掉线。", code)
     return DbError(f"数据库操作失败：{detail}", code)
 
 
@@ -71,9 +73,30 @@ def _connect() -> Connection:
     try:
         return pymysql.connect(**DB_CONFIG)  # type: ignore[arg-type]
     except pymysql.err.OperationalError as exc:
+        code = int(exc.args[0]) if exc.args and isinstance(exc.args[0], int) else 0
+        if code in (2003, 2013):
+            # 2003 连不上、2013 握手中被断开：组长的库在 Tailscale 内网，
+            # 最常见原因是 Tailscale 没登录，或者 Clash 把 100.64.0.0/10 也代理了。
+            raise DbError(
+                "无法连接数据库：请确认 Tailscale 已登录、Clash 等代理没有接管"
+                " 100.64.0.0/10，以及账号密码正确。",
+                2003,
+            ) from exc
         raise DbError("无法连接数据库，请确认 MySQL 已启动且账号密码正确。", 2003) from exc
     except pymysql.err.MySQLError as exc:
         raise _translate(exc) from exc
+
+
+def check_connection() -> None:
+    """
+    开一个连接再立刻关掉，用于启动时的连通性自检。
+
+    *Args:
+        无。
+    *Return:
+        无；连不上时抛 ``DbError``，由调用方决定是提示还是中断。
+    """
+    _connect().close()
 
 
 def get_conn() -> Connection:

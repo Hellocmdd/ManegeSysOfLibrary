@@ -7,7 +7,7 @@
 
 | 项目 | 选择 | 说明 |
 | --- | --- | --- |
-| 语言 | Python 3.11 | 与后端线、设计线保持一致 |
+| 语言 | Python 3.10 | 一键脚本优先 `py -3.10`，找不到再退 `py -3.11` / `py -3`；3.10 是本机 Flask/PyMySQL 已验证的版本 |
 | Web 框架 | Flask 3.x | 轻量，路由与模板够用 |
 | 数据库驱动 | **PyMySQL** | 纯 Python、免编译；`cursor.nextset()` 能正确接住存储过程的多个结果集，适合 `CALL` + `OUT` 参数 |
 | 模板 | Jinja2 | Flask 自带 |
@@ -51,10 +51,11 @@ src/frontend/
 
 脚本会依次：
 
-1. 建 `.venv` 虚拟环境（已存在则跳过）；
-2. 检查依赖，缺 Flask/PyMySQL 时按 `requirements.txt` 安装（清华源优先，失败依次切阿里云/PyPI）；
+1. 建 `.venv` 虚拟环境（已存在则跳过；优先 `py -3.10`，再退 `py -3.11`、`py -3`）；
+2. 检查依赖，缺 Flask/PyMySQL 时按 `requirements.txt` 安装（清华源 → 阿里云 → PyPI → **阿里云 HTTP**，最后一级用于旧 pip 遇到 TLS 被本地代理打断的情况）；
 3. 没有仓库根目录 `.env` 时按根目录 `.env.example` 复制一份；
-4. 启动服务并提示浏览器打开 `http://127.0.0.1:5000`。
+4. 自检数据库连通性（`db.check_connection()`），连不上只告警不中断，页面会显示错误页；
+5. 启动服务并提示浏览器打开 `http://127.0.0.1:5000`。
 
 数据库密码等 `DB_*` 和 Flask 配置统一在**仓库根目录 `.env`** 配置；前端 `.env` 仅作可选覆盖，不提供单独模板。关闭窗口或按 `Ctrl+C` 停止服务。
 
@@ -62,7 +63,7 @@ src/frontend/
 
 ```bash
 cd src/frontend
-py -3.11 -m venv .venv          # Linux/macOS 用 python3 -m venv .venv
+py -3.10 -m venv .venv         # Linux/macOS 用 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 python app.py
@@ -81,8 +82,10 @@ Windows 手动激活写 `.venv\Scripts\activate`。
 | `DB_HOST` | `127.0.0.1` | MySQL 主机 |
 | `DB_PORT` | `3306` | MySQL 端口 |
 | `DB_NAME` | `storageoflibrarysys` | 数据库名 |
-| `DB_USER` | `root` | MySQL 用户名 |
-| `DB_PASSWORD` | 空 | MySQL 密码 |
+| `DB_USER` | `root` | MySQL 用户名（连组长远程库时填 `Manager`） |
+| `DB_PASSWORD` | 空 | MySQL 密码，只写进本地 `.env` |
+| `DB_SSL` | `1` | 是否强制 TLS；远程库要求 `--ssl-mode=REQUIRED`，本机 MySQL 未开 TLS 时设 `0` |
+| `DB_TIME_ZONE` | `+08:00` | 连接后执行 `SET time_zone`，保证 `CURDATE()` 按东八区算借期与逾期 |
 | `FLASK_SECRET_KEY` | 演示用默认值 | 会话签名密钥 |
 | `FLASK_HOST` | `127.0.0.1` | 监听地址 |
 | `FLASK_PORT` | `5000` | 监听端口 |
@@ -94,12 +97,58 @@ Windows 手动激活写 `.venv\Scripts\activate`。
 $env:DB_PASSWORD = "你的 MySQL 密码"
 ```
 
-## 4. 首次运行的前提：数据库
+## 4. 数据库连接：远程 Tailscale 或本地 Docker
+
+### 4.1 连接组长的远程库（推荐，当前测试数据所在）
+
+远程地址 `100.123.95.127:3306` 属于 Tailscale 内网（`100.64.0.0/10`），不是公网地址，**必须先加入同一个 tailnet**，单靠账号密码连不上。
+
+1. 安装 Tailscale：`winget install Tailscale.Tailscale`；已装过就跳过。
+2. **不要用组长的 GitHub 账号登录**。让组长在 Tailscale 后台对这台机器做 Share（或邀请你自己的账号加入他的 tailnet），然后用自己的账号登录。
+3. 验证是否真的进网（要管理员 PowerShell，否则读不到 `tailscaled` 管道）：
+   ```powershell
+   tailscale status          # 应能看到自己这台机器，且状态不是 offline
+   tailscale ip -4           # 应输出 100.x.y.z
+   tailscale ping 100.123.95.127
+   ```
+   托盘菜单里看到 "Connected" 但不显示 100.x 地址，说明只是完成了身份登录，还没加入任何 tailnet。
+4. **让 Clash 放过内网段**：Clash 的 TUN/fake-ip 会把 `100.64.0.0/10` 也接走，表现为"连得上但立刻被断开"。在 Clash 规则里把 `100.64.0.0/10`（或 `100.123.95.127`）设为 `DIRECT`，或直接退出 Clash。
+5. 先用官方客户端自查，确认是库的问题还是网络的问题：
+   ```powershell
+   & "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" -h 100.123.95.127 -P 3306 -u Manager -p --ssl-mode=REQUIRED
+   ```
+6. 在仓库根目录 `.env` 填远程参数（模板见 `.env.example` 的"远程库走 Tailscale"段）：
+   ```
+   DB_HOST=100.123.95.127
+   DB_PORT=3306
+   DB_NAME=storageoflibrarysys
+   DB_USER=Manager
+   DB_PASSWORD=<组长给的口令>
+   DB_SSL=1
+   DB_TIME_ZONE=+08:00
+   ```
+7. 双击 `src/frontend/start.bat`，看到 `[3/4] checking database connection` 没有告警即可。
+
+常见错误对照：
+
+| 现象 | 原因 | 处理 |
+| --- | --- | --- |
+| `2013 Lost connection ... reading initial communication packet` | 没进 tailnet，或 Clash 接管了 `100.64.0.0/10` | 回到第 3、4 步 |
+| `2003 Can't connect to MySQL server` | Tailscale 未登录 / 地址或端口写错 | `tailscale status` 自检 |
+| `RuntimeError: cryptography is required for sha2_password` | MySQL 9 的默认认证插件需要额外包 | `pip install cryptography` |
+
+> 凭据只在群里临时传递，不要写进代码、文档或 Issue；建议请组长把口令轮换一次，并给前端单独建只读 + 存储过程执行权限的账号。
+
+### 4.2 本地 Docker MySQL（不依赖别人，可离线演示）
 
 ```bash
-# 后端线按 src/backend/sql 的顺序执行：04_init.sql → 05_存储过程.sql → 06_测试数据.sql
-# 然后回到前端：python app.py 或双击 start.bat
+docker compose up -d          # 仓库根目录，端口 3307，避开本机已装的 MySQL80
+# 容器首次启动会自动按 04_init.sql → 05_存储过程.sql → 06_测试数据.sql 初始化
 ```
+
+对应把 `.env` 的 `DB_HOST=127.0.0.1`、`DB_PORT=3307`、`DB_USER=library`、`DB_PASSWORD=<本地口令>`，`MYSQL_ROOT_PASSWORD` 也填上。若本机 MySQL 没开 TLS，把 `DB_SSL` 设为 `0`。
+
+### 4.3 数据库结构与数据
 
 `04_init.sql` 已按数据字典补齐六张表的字段、约束与外键；按 `04_init.sql → 05_存储过程.sql → 06_测试数据.sql` 顺序执行成功后，页面即可按真实数据查询。远程库已授予 `REFERENCES`，三步脚本已实际执行通过。
 
