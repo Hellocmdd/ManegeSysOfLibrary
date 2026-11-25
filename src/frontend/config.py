@@ -1,30 +1,28 @@
 """
 前端运行配置：数据库连接、Flask 密钥与分页参数。
 
-所有可能随机器变化的值都从环境变量读取，代码里不出现真实密码。
-同目录的 ``.env``（已被 .gitignore 忽略）会被本模块自动加载，系统环境变量优先；
-也可以直接在终端里设置：
-
-    $env:DB_PASSWORD = "你的密码"
-    $env:DB_NAME     = "library_system"
+配置来源优先级：系统环境变量 > src/frontend/.env（可选覆盖）> 仓库根目录 .env > 代码默认值。
+唯一模板是仓库根目录 .env.example；本目录 .env 为可选覆盖，不提供单独模板。
+代码里不出现真实密码。
 """
 
 import os
 from pathlib import Path
 
 
-def _load_dotenv(path: Path) -> None:
+def _read_dotenv(path: Path) -> dict[str, str]:
     """
-    把同目录下的 .env 文件读进环境变量，省掉 python-dotenv 依赖。
+    读取 .env 为键值对，不修改环境变量。
 
-    *Args:
-        path: .env 路径，通常与本文件同目录；文件不存在时直接返回。
-    *Return:
-        无。已经存在的环境变量不会被覆盖，命令行环境优先于 .env。
+    Args:
+        path: .env 路径；文件不存在时返回空字典。
+
+    Return:
+        解析出的键值对。utf-8-sig 兼容记事本 BOM，errors="replace" 兼容 GBK 误存。
     """
     if not path.is_file():
-        return
-    # utf-8-sig 兼容记事本加的 BOM；errors="replace" 保证被别人用 GBK 存过也能启动。
+        return {}
+    values: dict[str, str] = {}
     text = path.read_text(encoding="utf-8-sig", errors="replace")
     for raw_line in text.splitlines():
         line = raw_line.strip()
@@ -32,11 +30,22 @@ def _load_dotenv(path: Path) -> None:
             continue
         key, _, value = line.partition("=")
         key = key.strip()
-        if key and key not in os.environ:
-            os.environ[key] = value.strip().strip('"').strip("'")
+        if key:
+            values[key] = value.strip().strip('"').strip("'")
+    return values
 
 
-_load_dotenv(Path(__file__).with_name(".env"))
+def _apply_dotenv() -> None:
+    """按 根目录 .env < 本目录 .env < 系统环境变量 的顺序应用配置。"""
+    root_dir = Path(__file__).resolve().parents[2]
+    values = _read_dotenv(root_dir / ".env")
+    values.update(_read_dotenv(Path(__file__).with_name(".env")))
+    for key, value in values.items():
+        if key not in os.environ:
+            os.environ[key] = value
+
+
+_apply_dotenv()
 
 # 数据库连接参数。密码只从环境变量来，缺省为空串，启动时会给出提示。
 DB_CONFIG: dict[str, object] = {
@@ -44,7 +53,7 @@ DB_CONFIG: dict[str, object] = {
     "port": int(os.getenv("DB_PORT", "3306")),
     "user": os.getenv("DB_USER", "root"),
     "password": os.getenv("DB_PASSWORD", ""),
-    "database": os.getenv("DB_NAME", "library_system"),
+    "database": os.getenv("DB_NAME", "storageoflibrarysys"),
     "charset": "utf8mb4",
     # 存储过程内部自己开事务与回滚，这里打开自动提交，避免忘记 commit。
     "autocommit": True,

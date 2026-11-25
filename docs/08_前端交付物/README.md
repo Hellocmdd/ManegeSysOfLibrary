@@ -1,7 +1,7 @@
-# 图书管理系统 · 前端应用线 README
+# 图书管理系统 · 前端交付物
 
-> 前端实现已按前后端分离结构迁移到 `src/frontend/`；框架、语言与功能保持不变。
-> 负责人：段绪礼 · v1.1 · 2026-11-25（骨架已可运行，等待后端线补齐 `04_init.sql`）
+> 本文由 `src/frontend/README.md` 迁移至 `docs/08_前端交付物/`；运行时代码仍在 `src/frontend/`，框架、语言与功能不变。
+> 负责人：段绪礼 · v1.1 · 2026-11-25
 
 ## 1. 技术选型
 
@@ -20,8 +20,8 @@
 
 ```
 src/frontend/
-├── start.bat                 一键启动：建 venv、装依赖、生成 .env、跑服务
-├── .env.example              连接参数模板，首次运行由 start.bat 复制成 .env
+├── start.bat / start.sh      一键启动：建 venv、装依赖、生成根目录 .env、跑服务
+├── .env                      可选覆盖（无模板，配置统一在仓库根目录）
 ├── app.py                    Flask 入口：路由、登录态、错误页
 ├── config.py                 连接参数与常量，密码只从环境变量读取
 ├── db.py                     连接生命周期、参数化查询、存储过程调用
@@ -34,26 +34,29 @@ src/frontend/
 │   ├── reader_history.html   读者档案 + 借阅历史（还书、续借）
 │   ├── reports.html          四张统计报表
 │   └── error.html            数据库/404 错误页
-├── static/
-│   └── style.css             全站样式，含窄屏适配
-├── 08_前端页面截图/           交付截图（见该目录 README）
-└── 09_查询样例.sql            页面 SQL 与报表 SQL 汇总，供报告引用
+└── static/
+    └── style.css             全站样式，含窄屏适配
 ```
+
+> 非运行时交付物已迁至本目录：`README.md`、`08_前端页面截图/`、`09_查询样例.sql`。
 
 > 相对 v1.0 增加了 `db.py` 与 `queries.py`：单文件 `app.py` 会超过 400 行，按 `.agent/conventions/code-style.md` 拆分，SQL 集中到一处便于与 `09_查询样例.sql` 对照。
 
 ## 3. 启动方式
 
-### 3.1 一键启动（Windows，推荐）
+### 3.1 一键启动（推荐）
 
-双击 `src/frontend/start.bat`，它会依次：
+- Windows：双击 `src/frontend/start.bat`
+- Linux / macOS / WSL：在 `src/frontend/` 执行 `./start.sh`
 
-1. 用 `py -3.11` 在 `src/frontend/.venv` 建虚拟环境（已存在则跳过）；
-2. 检查依赖，缺 Flask/PyMySQL 时按 `requirements.txt` 安装；
-3. 没有 `.env` 时按 `.env.example` 复制一份；
+脚本会依次：
+
+1. 建 `.venv` 虚拟环境（已存在则跳过）；
+2. 检查依赖，缺 Flask/PyMySQL 时按 `requirements.txt` 安装（清华源优先，失败依次切阿里云/PyPI）；
+3. 没有仓库根目录 `.env` 时按根目录 `.env.example` 复制一份；
 4. 启动服务并提示浏览器打开 `http://127.0.0.1:5000`。
 
-数据库有密码时，第一次运行结束后编辑 `.env` 填 `DB_PASSWORD`，再双击一次即可。关闭窗口或按 `Ctrl+C` 停止服务。
+数据库密码等 `DB_*` 和 Flask 配置统一在**仓库根目录 `.env`** 配置；前端 `.env` 仅作可选覆盖，不提供单独模板。关闭窗口或按 `Ctrl+C` 停止服务。
 
 ### 3.2 手动启动（macOS / Linux，或想自己控制环境）
 
@@ -69,19 +72,18 @@ Windows 手动激活写 `.venv\Scripts\activate`。
 
 ### 3.3 配置项
 
-配置来源优先级：**系统环境变量 > `src/frontend/.env` > 代码默认值**，代码里不写密码。
+配置来源优先级：**系统环境变量 > `src/frontend/.env`（可选覆盖）> 仓库根目录 `.env` > 代码默认值**，代码里不写密码。
+
+唯一模板是**仓库根目录 `.env.example`**；前端 `.env` 为可选覆盖，不提供单独模板。前端直接读取以下变量：
 
 | 变量 | 默认值 | 说明 |
 | --- | --- | --- |
-| `DB_HOST` | `127.0.0.1` | MySQL 地址 |
-| `DB_PORT` | `3306` | 端口；改用 Docker 的 MySQL 时填 `3307` |
-| `DB_USER` | `root` | 账号 |
-| `DB_PASSWORD` | 空 | 密码，只从环境变量或 `.env` 读取 |
-| `DB_NAME` | `library_system` | 库名，与设计线一致 |
 | `FLASK_SECRET_KEY` | 演示用默认值 | 会话签名密钥 |
+| `FLASK_HOST` | `127.0.0.1` | 监听地址 |
+| `FLASK_PORT` | `5000` | 监听端口 |
 | `PAGE_SIZE` | `10` | 每页书目条数 |
 
-`.env` 已被 `.gitignore` 忽略，`.env.example` 进仓库作为模板；也可以在终端临时覆盖：
+`.env` 已被 `.gitignore` 忽略，根目录 `.env.example` 是唯一模板；也可以在终端临时覆盖：
 
 ```powershell
 $env:DB_PASSWORD = "你的 MySQL 密码"
