@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}统计报表 · 图书管理系统{% endblock %}
+
+{% block content %}
+<div class="grid">
+  <section class="card">
+    <h2>借阅次数 TOP 10</h2>
+    <table class="table">
+      <thead><tr><th class="num">#</th><th>书名</th><th class="num">次数</th></tr></thead>
+      <tbody>
+        {% for row in top_books %}
+        <tr>
+          <td class="num">{{ loop.index }}</td>
+          <td>{{ row.title }}</td>
+          <td class="num">{{ row.borrow_count }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="3" class="empty">暂无借阅数据。</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <p class="hint">口径：含已归还记录，按借阅总次数排序。</p>
+  </section>
+
+  <section class="card">
+    <h2>各分类馆藏量</h2>
+    <table class="table">
+      <thead><tr><th>分类</th><th class="num">书目数</th><th class="num">副本数</th></tr></thead>
+      <tbody>
+        {% for row in category_stock %}
+        <tr>
+          <td>{{ row.cat_name }}</td>
+          <td class="num">{{ row.book_count }}</td>
+          <td class="num">{{ row.copy_count }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="3" class="empty">分类表为空。</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <p class="hint">口径：只统计挂在本分类下的书，父分类不含子分类的汇总。</p>
+  </section>
+
+  <section class="card">
+    <h2>当前逾期清单</h2>
+    <table class="table">
+      <thead>
+        <tr><th>读者</th><th>书名</th><th>应还</th><th class="num">逾期天数</th></tr>
+      </thead>
+      <tbody>
+        {% for row in overdue %}
+        <tr>
+          <td>{{ row.reader_name }} <span class="mono muted">{{ row.reader_id }}</span></td>
+          <td>{{ row.title }}</td>
+          <td>{{ row.due_date }}</td>
+          <td class="num"><span class="badge badge-err">{{ row.overdue_days }}</span></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="empty">当前没有逾期未还的记录。</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <p class="hint">口径：仅统计尚未归还且已过应还日期的记录，已归还的历史逾期不计入。</p>
+  </section>
+
+  <section class="card">
+    <h2>每月借阅量</h2>
+    <table class="table">
+      <thead><tr><th>月份</th><th class="num">借阅次数</th></tr></thead>
+      <tbody>
+        {% for row in monthly %}
+        <tr>
+          <td class="mono">{{ row.month_label }}</td>
+          <td class="num">{{ row.borrow_count }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="2" class="empty">暂无借阅数据。</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <p class="hint">口径：按借出日期所在月份分组，含已归还记录。</p>
+  </section>
+</div>
+{% endblock %}

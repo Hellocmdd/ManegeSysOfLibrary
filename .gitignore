@@ -1,21 +1,27 @@
+# ========== 数据库大作业 .gitignore ==========
+
+# 操作系统
+.DS_Store
+Thumbs.db
+desktop.ini
+
 # Python
 __pycache__/
 *.py[cod]
-*$py.class
 *.so
-
-# 虚拟环境
 .venv/
 venv/
 env/
 ENV/
 
+# Java / Maven
+target/
+*.class
+
 # 依赖与构建产物
 pip-wheel-metadata/
 build/
 dist/
-target/
-*.class
 *.egg-info/
 node_modules/
 
@@ -26,10 +32,16 @@ node_modules/
 .coverage
 htmlcov/
 
-# 环境变量（.env.example 可正常提交）
+# 数据库备份文件
+*.bak
+*.sql.bak
+
+# 凭据（绝对不能提交）
 .env
 .env.*
+*.env
 !.env.example
+config_secret.py
 
 # 日志与临时文件
 *.log
@@ -39,9 +51,7 @@ htmlcov/
 *.swo
 *~
 
-# 编辑器与系统文件
-.idea/
+# IDE
 .vscode/
+.idea/
 *.iml
-.DS_Store
-Thumbs.db

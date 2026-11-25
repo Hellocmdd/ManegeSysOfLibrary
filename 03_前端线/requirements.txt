@@ -1,0 +1,6 @@
+# Frontend runtime dependencies: one web framework + one MySQL driver, no ORM.
+# Keep this file ASCII-only: pip on Windows decodes requirements files with the
+# system locale (GBK) and fails on UTF-8 content without a BOM.
+# Install: pip install -r requirements.txt   (run from the frontend folder)
+Flask>=3.0,<4.0
+PyMySQL>=1.1,<2.0
