@@ -58,3 +58,6 @@ config_secret.py
 
 # logs
 logs/
+
+# codebuddy
+.codebuddy/

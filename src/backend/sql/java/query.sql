@@ -4,6 +4,7 @@
 -- 要求：所有查询按 ORDER BY 输出确定性结果；状态/逾期口径见 .agent/conventions/db-contract.md。
 -- ====================================================================
 
+SET NAMES utf8mb4;
 USE storageoflibrarysys;
 
 -- 1. 单表条件查询：状态正常的读者

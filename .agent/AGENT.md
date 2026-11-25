@@ -11,7 +11,7 @@
 
 ## 二、项目速览
 
-图书管理系统数据库课程设计：MySQL 8.0 建库建表 + 存储过程 + 测试数据，Python/Flask 做前端页面与统计报表，最终打包提交。
+图书管理系统数据库课程设计：MySQL 8.0+ 建库建表 + 存储过程 + 测试数据（本地 Docker 用 8.4，现有远程实例为 9.7.2），Python/Flask 做前端页面与统计报表，最终打包提交。
 
 ```text
 docs  需求 → ER 图（01_ER图.mmd）→ 关系模式（02_关系模式.md）→ 数据字典 / 范式检查
@@ -19,7 +19,7 @@ src/backend/sql  04_init.sql（建库建表）→ 05_存储过程.sql（借/还/
 src/frontend  Flask + Jinja2 + 原生 HTML/CSS → 登录 → 书目查询 → 借还续借 → 4 张统计报表 → 截图归档
 ```
 
-技术栈：MySQL 8.0（InnoDB、utf8mb4）· Python 3.11 · Flask · `mysql-connector-python`（或 `PyMySQL`）· Jinja2 · 原生 HTML/CSS。**不用 ORM，SQL 直接写在 Python 里**——这是课程要展示 SQL 功底的地方，不要用 ORM 把它藏起来。
+技术栈：MySQL 8.0+（InnoDB、utf8mb4；本地 Docker 8.4 / 远程 9.7.2）· Python 3.11 · Flask · `mysql-connector-python`（或 `PyMySQL`）· Jinja2 · 原生 HTML/CSS。**不用 ORM，SQL 直接写在 Python 里**——这是课程要展示 SQL 功底的地方，不要用 ORM 把它藏起来。
 
 ### 六张表（以 `docs/03_数据库逻辑设计/02_关系模式.md` 与 `src/backend/sql/04_init.sql` 为准）
 
