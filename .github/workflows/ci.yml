@@ -25,9 +25,13 @@ jobs:
           fi
 
   java-build:
-    name: Java build and test
+    name: Java build and test (${{ matrix.os }})
     needs: guard
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -46,9 +50,13 @@ jobs:
         run: mvn -B test
 
   frontend-test:
-    name: Frontend tests
+    name: Frontend tests (${{ matrix.os }})
     needs: guard
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -61,16 +69,34 @@ jobs:
           cache-dependency-path: src/frontend/requirements.txt
 
       - name: Install dependencies
+        run: python -m pip install --disable-pip-version-check -r src/frontend/requirements.txt -r src/frontend/requirements-dev.txt
+
+      - name: Validate shell launchers
+        if: runner.os != 'Windows'
+        run: bash -n start.sh src/frontend/start.sh src/backend/start.sh
+
+      - name: Validate Windows launchers
+        if: runner.os == 'Windows'
+        shell: pwsh
         run: |
-          python -m pip install --disable-pip-version-check -r src/frontend/requirements.txt -r src/frontend/requirements-dev.txt
+          $files = @('start.bat', 'src/frontend/start.bat', 'src/backend/start.bat')
+          foreach ($file in $files) {
+            if (-not (Test-Path $file)) { throw "Missing launcher: $file" }
+            $bytes = [System.IO.File]::ReadAllBytes($file)
+            if ($bytes | Where-Object { $_ -gt 127 }) { throw "$file must be ASCII-only" }
+          }
 
       - name: Pytest
         run: python -m pytest -q -m "not integration"
 
   integration-contract:
-    name: Frontend-backend contract
+    name: Frontend-backend contract (${{ matrix.os }})
     needs: [java-build, frontend-test]
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -93,8 +119,7 @@ jobs:
         run: mvn -B -q -DskipTests compile
 
       - name: Install frontend test dependencies
-        run: |
-          python -m pip install --disable-pip-version-check -r src/frontend/requirements.txt -r src/frontend/requirements-dev.txt
+        run: python -m pip install --disable-pip-version-check -r src/frontend/requirements.txt -r src/frontend/requirements-dev.txt
 
       - name: Contract tests
         run: python -m pytest -q src/frontend/tests/test_contract.py -m "not integration"
