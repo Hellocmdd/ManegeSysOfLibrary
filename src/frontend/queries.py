@@ -92,7 +92,7 @@ FROM Borrow br
 JOIN Copy cp ON cp.copy_id = br.copy_id
 JOIN Book b ON b.book_id = cp.book_id
 GROUP BY b.book_id, b.title
-ORDER BY borrow_count DESC, b.title
+ORDER BY borrow_count DESC, b.book_id
 LIMIT 10
 """
 
@@ -104,7 +104,7 @@ FROM Category c
 LEFT JOIN Book b ON b.cat_id = c.cat_id
 LEFT JOIN Copy cp ON cp.book_id = b.book_id
 GROUP BY c.cat_id, c.cat_name
-ORDER BY c.cat_id
+ORDER BY copy_count DESC, c.cat_id
 """
 
 # 口径：只统计"当前仍未归还且已过期"，不含历史上有过逾期但已归还的记录。
