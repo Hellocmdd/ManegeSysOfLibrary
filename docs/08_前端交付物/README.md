@@ -78,6 +78,11 @@ Windows 手动激活写 `.venv\Scripts\activate`。
 
 | 变量 | 默认值 | 说明 |
 | --- | --- | --- |
+| `DB_HOST` | `127.0.0.1` | MySQL 主机 |
+| `DB_PORT` | `3306` | MySQL 端口 |
+| `DB_NAME` | `storageoflibrarysys` | 数据库名 |
+| `DB_USER` | `root` | MySQL 用户名 |
+| `DB_PASSWORD` | 空 | MySQL 密码 |
 | `FLASK_SECRET_KEY` | 演示用默认值 | 会话签名密钥 |
 | `FLASK_HOST` | `127.0.0.1` | 监听地址 |
 | `FLASK_PORT` | `5000` | 监听端口 |

@@ -1,7 +1,7 @@
 -- 查询脚本：覆盖课程任务书要求的 8 类查询
 -- 所有查询必须在远程 MySQL 9.7.2 中实际执行并核验结果。
 
-USE library_management;
+USE storageoflibrarysys;
 
 -- 1. 单表条件查询：查询状态正常的读者
 SELECT reader_id, name, phone, status

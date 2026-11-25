@@ -4,6 +4,15 @@ rem Keep this file ASCII-only for cmd.exe compatibility.
 setlocal
 cd /d "%~dp0"
 
+if not exist ".env" if exist ".env.example" (
+    copy /y ".env.example" ".env" >nul
+    if errorlevel 1 (
+        echo Failed to create .env from .env.example.
+        exit /b 1
+    )
+    echo [hint] created repo root .env from .env.example; fill DB_PASSWORD before connecting
+)
+
 echo == Library one-key launcher ==
 echo Starting backend and frontend in separate windows ...
 

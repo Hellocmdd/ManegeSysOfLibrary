@@ -24,7 +24,7 @@ public final class DBUtil {
     public static Connection getConnection() throws SQLException {
         String host = get("DB_HOST", "127.0.0.1");
         String port = get("DB_PORT", "3306");
-        String database = get("DB_NAME", "library_management");
+        String database = get("DB_NAME", "storageoflibrarysys");
         String url = String.format(
                 "jdbc:mysql://%s:%s/%s?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai",
                 host, port, database);

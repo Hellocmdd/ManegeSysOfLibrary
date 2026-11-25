@@ -11,12 +11,11 @@
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 1;
 
-DROP DATABASE IF EXISTS library_system;
-CREATE DATABASE library_system
+CREATE DATABASE IF NOT EXISTS storageoflibrarysys
     DEFAULT CHARACTER SET utf8mb4
     DEFAULT COLLATE utf8mb4_unicode_ci;
 
-USE library_system;
+USE storageoflibrarysys;
 
 -- ====================================================================
 -- 表 1: Reader 读者
