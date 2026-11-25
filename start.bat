@@ -14,10 +14,9 @@ if not exist ".env" if exist ".env.example" (
 )
 
 echo == Library one-key launcher ==
-echo Starting backend and frontend in separate windows ...
+echo [1/1] starting frontend in current window ...
+echo Browser: http://127.0.0.1:5000
+echo Java CLI is optional: src\backend\start.bat --cli
+echo Press Ctrl+C to stop.
 
-start "Library Backend" cmd /k call "%~dp0src\backend\start.bat"
-start "Library Frontend" cmd /k call "%~dp0src\frontend\start.bat"
-
-echo.
-echo Both windows opened. Close them or press Ctrl+C in each to stop.
+call "%~dp0src\frontend\start.bat"

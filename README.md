@@ -74,12 +74,13 @@ ManegeSysOfLibrary/
 
 | 平台                | 命令                     | 行为                                                               |
 | ------------------- | ------------------------ | ------------------------------------------------------------------ |
-| Windows             | 双击根目录 `start.bat` | 分别打开后端与前端窗口                                             |
-| Linux / macOS / WSL | `./start.sh`           | 前端后台运行，日志写入 `logs/frontend.log`；后端命令行保持在前台 |
+| Windows             | 双击根目录 `start.bat` | 当前窗口启动 Flask 前端，输出直接可见；不再打开后端命令行窗口       |
+| Linux / macOS / WSL | `./start.sh`           | 前台启动 Flask 前端，输出直接可见；不再默认启动 Java 命令行程序     |
 
-单独启动：
+一键启动只负责 Web 前端；Java 命令行程序按课程要求保留，但需要单独启动：
 
-- 后端：`src/backend/start.bat` / `src/backend/start.sh`
+- 后端连接检查（默认）：`src/backend/start.sh` / `src/backend/start.bat`
+- 后端命令行演示：`src/backend/start.sh --cli` / `src/backend/start.bat --cli`
 - 前端：`src/frontend/start.bat` / `src/frontend/start.sh`
 
 ### 后端（Java/JDBC）

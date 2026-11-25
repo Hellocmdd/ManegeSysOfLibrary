@@ -67,16 +67,18 @@ def test_database_name_is_shared_by_defaults_and_sql_scripts() -> None:
 def test_root_launchers_create_env_before_starting_apps() -> None:
     shell_launcher = (REPO_ROOT / "start.sh").read_text(encoding="utf-8")
     windows_launcher = (REPO_ROOT / "start.bat").read_text(encoding="utf-8")
+    backend_shell = (
+        REPO_ROOT / "src" / "backend" / "start.sh"
+    ).read_text(encoding="utf-8")
 
     env_copy = shell_launcher.index('cp "$ROOT_DIR/.env.example" "$ROOT_DIR/.env"')
     assert env_copy < shell_launcher.index('"$ROOT_DIR/src/frontend/start.sh"')
-    assert env_copy < shell_launcher.index('"$ROOT_DIR/src/backend/start.sh"')
+    assert '"$ROOT_DIR/src/backend/start.sh"' not in shell_launcher
     assert windows_launcher.index('copy /y ".env.example" ".env"') < windows_launcher.index(
-        'start "Library Backend"'
+        'call "%~dp0src\\frontend\\start.bat"'
     )
-    assert windows_launcher.index('copy /y ".env.example" ".env"') < windows_launcher.index(
-        'start "Library Frontend"'
-    )
+    assert 'start "Library Backend"' not in windows_launcher
+    assert '"--cli"' in backend_shell
 
 
 def test_backend_sql_defines_expected_tables_and_procedures() -> None:

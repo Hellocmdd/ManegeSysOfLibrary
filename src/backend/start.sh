@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# One-click launcher for the library backend (Linux / macOS / WSL).
+# Launcher for the library backend (Linux / macOS / WSL).
+# By default it only checks the JDBC connection; pass --cli to start the Java CLI.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -16,5 +17,10 @@ fi
 echo "[1/2] checking JDBC connection ..."
 mvn -q exec:java -Dexec.mainClass=com.library.util.ConnectionCheck
 
-echo "[2/2] starting command line program ..."
-exec mvn -q exec:java -Dexec.mainClass=com.library.Main
+if [ "${1:-}" = "--cli" ]; then
+    echo "[2/2] starting command line program ..."
+    exec mvn -q exec:java -Dexec.mainClass=com.library.Main
+fi
+
+echo "[2/2] JDBC connection is OK; command line program not started."
+echo "To start the Java CLI, run: src/backend/start.sh --cli"
