@@ -14,14 +14,14 @@
 图书管理系统数据库课程设计：MySQL 8.0 建库建表 + 存储过程 + 测试数据，Python/Flask 做前端页面与统计报表，最终打包提交。
 
 ```text
-01_设计线  需求 → ER 图（01_ER图.mmd）→ 关系模式（02_关系模式.md）→ 数据字典 / 范式检查
-02_后端线  04_init.sql（建库建表）→ 05_存储过程.sql（借/还/续借）→ 06_测试数据.sql
-03_前端线  Flask + Jinja2 + 原生 HTML/CSS → 登录 → 书目查询 → 借还续借 → 4 张统计报表 → 截图归档
+docs  需求 → ER 图（01_ER图.mmd）→ 关系模式（02_关系模式.md）→ 数据字典 / 范式检查
+src/backend/sql  04_init.sql（建库建表）→ 05_存储过程.sql（借/还/续借）→ 06_测试数据.sql
+src/frontend  Flask + Jinja2 + 原生 HTML/CSS → 登录 → 书目查询 → 借还续借 → 4 张统计报表 → 截图归档
 ```
 
 技术栈：MySQL 8.0（InnoDB、utf8mb4）· Python 3.11 · Flask · `mysql-connector-python`（或 `PyMySQL`）· Jinja2 · 原生 HTML/CSS。**不用 ORM，SQL 直接写在 Python 里**——这是课程要展示 SQL 功底的地方，不要用 ORM 把它藏起来。
 
-### 六张表（以 `01_设计线/02_关系模式.md` 与 `02_后端线/04_init.sql` 为准）
+### 六张表（以 `docs/03_数据库逻辑设计/02_关系模式.md` 与 `src/backend/sql/04_init.sql` 为准）
 
 | 表 | 主码 | 外码 | 关键字段 |
 | --- | --- | --- | --- |
@@ -34,7 +34,7 @@
 
 反范式字段：`Copy.is_available`、`Borrow.is_overdue`、`Borrow.status`。它们由应用层事务与触发器维护，**前端只读不改**。
 
-### 三个存储过程的真实签名（以 `02_后端线/05_存储过程.sql` 为准）
+### 三个存储过程的真实签名（以 `src/backend/sql/05_存储过程.sql` 为准）
 
 | 存储过程 | 签名 | 返回 |
 | --- | --- | --- |
@@ -44,7 +44,7 @@
 
 ### 必须记住的事实
 
-- **借书要接 OUT 参数**：`CALL borrow_book(%s, %s, @p_result)` 之后必须再 `SELECT @p_result`，否则拿不到结果。`03_前端线/README.md` 里的 `CALL borrow_book(reader_id, copy_id)` 是简化写法，与实际定义不符，**以 `.sql` 为准**。
+- **借书要接 OUT 参数**：`CALL borrow_book(%s, %s, @p_result)` 之后必须再 `SELECT @p_result`，否则拿不到结果。`src/frontend/README.md` 里的 `CALL borrow_book(reader_id, copy_id)` 是简化写法，与实际定义不符，**以 `.sql` 为准**。
 - **状态值是中文枚举**：`Borrow.status ∈ {'在借', '已归还', '已逾期'}`；`Reader.status` 1 正常 / 0 禁用；`Copy.is_available` 1 在馆 / 0 借出；`Borrow.is_overdue` 0 / 1。
 - **管理员密码在 SQL 侧比较**：`WHERE account = %s AND pwd = SHA2(%s, 256)`；测试账号 `admin / 123456`。明文密码不落库、不进代码。
 - **读者登录只校验 `reader_id + name`**：读者表没有密码字段。这是课程范围决定的，写进 README 的"已知限制"，不能描述成"安全登录"。
@@ -57,20 +57,20 @@
 ### 常用命令（项目根目录执行）
 
 ```powershell
-# 依赖（虚拟环境建在 03_前端线/.venv，已在 .gitignore 中忽略）
-python -m pip install -r 03_前端线/requirements.txt
+# 依赖（虚拟环境建在 src/frontend/.venv，已在 .gitignore 中忽略）
+python -m pip install -r src/frontend/requirements.txt
 
 # 初始化数据库：顺序不能换，--default-character-set 必须给
-mysql -u root -p --default-character-set=utf8mb4 -e "source 02_后端线/04_init.sql"
-mysql -u root -p --default-character-set=utf8mb4 -e "source 02_后端线/05_存储过程.sql"
-mysql -u root -p --default-character-set=utf8mb4 -e "source 02_后端线/06_测试数据.sql"
+mysql -u root -p --default-character-set=utf8mb4 -e "source src/backend/sql/04_init.sql"
+mysql -u root -p --default-character-set=utf8mb4 -e "source src/backend/sql/05_存储过程.sql"
+mysql -u root -p --default-character-set=utf8mb4 -e "source src/backend/sql/06_测试数据.sql"
 
 # 启动前端
-python 03_前端线/app.py
+python src/frontend/app.py
 # 浏览器访问 http://127.0.0.1:5000
 
 # 语法自检（不需要数据库）
-python -m compileall -q 03_前端线
+python -m compileall -q src/frontend
 ```
 
 ## 三、开工前先确认任务类型
@@ -108,7 +108,7 @@ python -m compileall -q 03_前端线
 - **N2 前端不写 DDL/DML 业务逻辑**：不建库建表、不改测试数据；借书/还书/续借只调存储过程，不在 Python 里用 `INSERT`/`UPDATE` 重造一套。
 - **N3 所有 SQL 参数化**：占位符 + 参数元组（`cursor.execute("... WHERE reader_id = %s", (reader_id,))`）。禁止 f-string、`%`、`+` 把用户输入拼进 SQL；`LIKE` 的通配符拼在**参数值**上（`f"%{kw}%"` 作为参数），不拼在 SQL 文本里。
 - **N4 密码与连接串不进仓库**：`config.py` 只读环境变量或 `config_secret.py`（已在 `.gitignore`）；真实密码放 `.env` 或本地未跟踪文件。README 里的示例密码必须写成占位符。
-- **N5 不越界改他人文件**：`01_设计线/`、`02_后端线/` 只读。发现表结构、SQL 写法、统计口径不一致，先报告差异与影响，不动手改。
+- **N5 不越界改他人文件**：`docs/`、`src/backend/sql/` 只读。发现表结构、SQL 写法、统计口径不一致，先报告差异与影响，不动手改。
 - **N6 存储过程返回码逐分支处理**：`-1/-2/-3/-4` 都要给中文提示；不得把非 0 当成功，也不得吞掉 `-4`（它代表事务已回滚）。
 - **N7 报表数字只能来自数据库实跑**：禁止写死示例值、禁止编造统计结果；截图必须来自真实页面，不用画图软件补。
 - **N8 输出确定性**：每条报表 SQL 必须有明确 `ORDER BY`；筛选、分页默认值写进页面；同一数据反复刷新顺序一致。
@@ -124,7 +124,7 @@ python -m compileall -q 03_前端线
 1. **确认任务**：一行写出任务类型 + 涉及文件 + 改动范围。
 2. **取上下文**：读要改的文件、`conventions/db-contract.md` 对应表/过程、`00_分工与进度.md` 的交付节点；把本次相关约束列 3–6 条。
 3. **加载规范**：按第四节只加载需要的文件，不预读全部。
-4. **找冲突**：要偏离表结构、统计口径或模块边界时，先停下说明"偏离点 + 影响 + 可选方案"，等确认；发现文档与 `02_后端线/*.sql` 不一致，报告差异，不自行择一执行。
+4. **找冲突**：要偏离表结构、统计口径或模块边界时，先停下说明"偏离点 + 影响 + 可选方案"，等确认；发现文档与 `src/backend/sql/*.sql` 不一致，报告差异，不自行择一执行。
 5. **产出**：代码给完整文件 + 路径；多处修改给 diff；命令写全参数并注明执行目录。
 6. **自检**：逐条过第八节清单，未通过项如实写出。
 7. **收尾**：附"变更说明"——改了什么、没改什么、留了哪些 `TODO(<模块>):`、下一步建议。
@@ -141,13 +141,13 @@ python -m compileall -q 03_前端线
 ## 八、交付前自检
 
 - [ ] 是否触碰 N1–N14 中任何一条？
-- [ ] 表名、字段名、存储过程参数与 `02_后端线/*.sql` 一致？（不是与 `03_前端线/README.md` 的简化示例一致）
+- [ ] 表名、字段名、存储过程参数与 `src/backend/sql/*.sql` 一致？（不是与 `src/frontend/README.md` 的简化示例一致）
 - [ ] 每条 SQL 都参数化，`LIKE` 的 `%` 在参数里？
 - [ ] 借/还/续借的返回码与"静默 0 行"都处理了？
 - [ ] 报表有 `ORDER BY`、口径写在页面上、数字能对上测试数据？
 - [ ] 页面路径用了 `url_for`、模板里的用户输入会被自动转义（没有 `|safe`）？
 - [ ] 密码、连接串、绝对路径没有被写进代码或文档？
-- [ ] `python -m compileall -q 03_前端线` 通过？页面实际起过？
+- [ ] `python -m compileall -q src/frontend` 通过？页面实际起过？
 - [ ] 有没有编造测试结果、截图或统计数字？
 - [ ] 需要 git 写操作时，确认请求发了没有？
 

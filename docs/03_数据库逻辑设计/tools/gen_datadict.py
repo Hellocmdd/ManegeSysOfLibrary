@@ -4,7 +4,7 @@
 """
 import zipfile, os, time
 
-OUT = r"c:\Users\23506\Desktop\杂物\ManegeSysOfLibrary\01_设计线\03_数据字典.xlsx"
+OUT = r"c:\Users\23506\Desktop\杂物\ManegeSysOfLibrary\docs\03_数据字典.xlsx"
 
 NS = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
 

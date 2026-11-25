@@ -31,7 +31,7 @@
 - 必须使用 `PreparedStatement`，禁止用字符串拼接用户输入值。
 - 必须使用 try-with-resources 关闭 `Connection`、`PreparedStatement`、`ResultSet`。
 - 生产查询禁止 `SELECT *`，必须显式列出字段。
-- SQL 文件放在 `docs/04_数据库实现/`，按 `create_tables.sql`、`insert_data.sql`、`query.sql` 组织。
+- SQL 文件放在 `src/backend/sql/java/`，按 `create_tables.sql`、`insert_data.sql`、`query.sql` 组织。
 - 所有 SQL 必须在远程 MySQL 9.7.2 实例中实际执行并核验结果，禁止仅凭语法推断。
 - 数据库连接参数来自环境变量或本地 `.env`；禁止在源码中写入主机、账号或密码。
 

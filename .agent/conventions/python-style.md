@@ -1,6 +1,6 @@
 # python-style.md — Python 专项规范
 
-适用于 `03_前端线/` 下所有 `.py` 文件。**类型注解与 docstring 是硬性要求，不是建议**；没有类型注解和 docstring 的函数视为未完成。
+适用于 `src/frontend/` 下所有 `.py` 文件。**类型注解与 docstring 是硬性要求，不是建议**；没有类型注解和 docstring 的函数视为未完成。
 
 ## 1. 类型注解
 
@@ -171,7 +171,7 @@ SECRET_KEY: str = os.getenv("FLASK_SECRET_KEY", "dev-only-change-me")
 
 ## 7. 测试与验证
 
-- 测试放 `03_前端线/tests/`，文件名 `test_*.py`，用 `pytest`；测试依赖写进 `requirements-dev.txt`，不混进运行依赖。
+- 测试放 `src/frontend/tests/`，文件名 `test_*.py`，用 `pytest`；测试依赖写进 `requirements-dev.txt`，不混进运行依赖。
 - 覆盖顺序按 `test-writer.md` 的 F1–F9 矩阵；数据库相关用例只读或自带清理，不污染 `06_测试数据.sql` 的基线。
 - 手工验证过的结论要写清"跑了什么、看到什么数字"，不能只写"已验证"。
 

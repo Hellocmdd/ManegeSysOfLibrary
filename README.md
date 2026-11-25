@@ -21,7 +21,7 @@
 
 - **数据库**：MySQL 9.7.2（远程实例），存储引擎 InnoDB，字符集 utf8mb4
 - **后端**：Java 21 + JDBC（MySQL Connector/J），命令行程序，采用 `util/dao/service/Main` 分层；按课程任务书实现，不引入 Web 框架
-- **前端**：沿用现有 `03_前端线/` 的 Flask + Jinja2 实现，本次不改动其框架与语言；`src/frontend/` 为前后端分离目录占位
+- **前端**：已迁移到 `src/frontend/` 的 Flask + Jinja2 实现，本次不改动其框架与语言
 - **设计工具**：draw.io（ER 图）、Excel（数据字典）
 - **工程规范**：[.agent/README.md](.agent/README.md) 与 [.agent/java-jdbc/README.md](.agent/java-jdbc/README.md)
 
@@ -30,38 +30,47 @@
 ```text
 ManegeSysOfLibrary/
 ├── .agent/                    ← AI 协作提示词与 Java/JDBC 规范
-├── .env.example               ← 远程数据库连接配置模板（密码不入库）
+├── .env.example               ← 后端远程数据库连接模板
 ├── pom.xml                    ← Maven 依赖与构建配置
 ├── src/
-│   ├── backend/               ← Java/JDBC 源码（util/dao/service/Main）
-│   └── frontend/              ← 前端目录占位（框架/语言沿用原计划）
-├── 00_分工与进度.md            ← 早期分工文档
-├── 01_项目线/                  ← 现有 ER 图、关系模式、数据字典等
-├── 02_后端线/                  ← 现有建表/存储过程/测试数据 SQL
-├── 03_前端线/                  ← 现有 Flask 前端实现
-├── docs/                      ← 本次新增的规范、环境说明与交付模板
+│   ├── backend/
+│   │   ├── main/java/com/library/   ← Java/JDBC 源码
+│   │   ├── test/java/               ← Java 测试
+│   │   └── sql/                     ← 后端线 SQL 与 Java 配套脚本
+│   └── frontend/                ← Flask + Jinja2 前端实现
+│       ├── app.py / config.py / db.py / queries.py
+│       ├── requirements.txt
+│       ├── start.bat            ← Windows 一键启动
+│       ├── templates/ / static/
+│       └── 08_前端页面截图/
+├── docs/                      ← 设计线成果与交付模板
 │   ├── 00_分工与进度.md
 │   ├── 环境说明.md
 │   ├── 01_项目需求分析/
 │   ├── 02_数据库概念设计/
+│   │   ├── 01_ER图.mmd
+│   │   └── ER图/
 │   ├── 03_数据库逻辑设计/
-│   ├── 04_数据库实现/
+│   │   ├── 02_关系模式.md
+│   │   ├── 03.1_范式检查说明.md
+│   │   ├── 03_数据字典.xlsx
+│   │   └── tools/gen_datadict.py
 │   ├── 05_JDBC应用编程/
 │   ├── 06_测试与优化/
 │   └── 07_AI辅助过程/
-├── tools/
+├── 00_分工与进度.md            ← 早期分工文档
 ├── README.md                  ← 本文件
 └── LICENSE                    ← Apache License 2.0
 ```
 
-> `02_后端线/*.sql` 由设计线维护，是现有数据库事实来源；`docs/04_数据库实现/` 是 Java/JDBC 工程配套脚本骨架，后续需与 `02_后端线/` 对齐。前端相关目录与文件保持原计划不动。
+> 设计线成果在 `docs/`，后端线 SQL 与 Java 工程在 `src/backend/`，前端线在 `src/frontend/`；三者技术选型与既有实现保持不变。
 
 ## 快速开始
 
 ### 后端（Java/JDBC）
 
 1. 复制 `.env.example` 为本地 `.env`，填写 host、port、库名、用户名与密码；密码只写本地 `.env`，不要提交。
-2. 导入数据库脚本：现有脚本在 `02_后端线/04_init.sql`、`05_存储过程.sql`、`06_测试数据.sql`；Java 配套骨架在 `docs/04_数据库实现/`。
+2. 导入数据库脚本：现有脚本在 `src/backend/sql/04_init.sql`、`05_存储过程.sql`、`06_测试数据.sql`；Java 配套骨架在 `src/backend/sql/java/`。
 3. 测试 JDBC 连接：
 
 ```bash
@@ -80,8 +89,9 @@ mvn -q exec:java -Dexec.mainClass=com.library.Main
 ### 前端（沿用现有实现）
 
 ```bash
-pip install flask mysql-connector-python
-python 03_前端线/app.py        # 浏览器访问 http://localhost:5000
+cd src/frontend
+pip install -r requirements.txt
+python app.py                    # 浏览器访问 http://127.0.0.1:5000
 ```
 
 ## 同步机制

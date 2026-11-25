@@ -1,6 +1,6 @@
 # sql-style.md — SQL 专项规范
 
-适用：Python 里的查询语句、`03_前端线/09_查询样例.sql`、报表统计。**只写 SELECT**；DDL 与业务 DML 属后端线，前端不得代劳。
+适用：Python 里的查询语句、`src/frontend/09_查询样例.sql`、报表统计。**只写 SELECT**；DDL 与业务 DML 属后端线，前端不得代劳。
 
 ## 1. 参数化
 
@@ -48,7 +48,7 @@ WHERE br.return_date IS NULL AND br.due_date < CURDATE()
 
 ## 4. 存储过程调用
 
-- 签名以 `02_后端线/05_存储过程.sql` 为准，**不照抄 `03_前端线/README.md` 里的旧写法**：
+- 签名以 `src/backend/sql/05_存储过程.sql` 为准，**不照抄 `src/frontend/README.md` 里的旧写法**：
 
 | 过程 | 真实调用 | 结果获取 |
 | --- | --- | --- |
@@ -68,7 +68,7 @@ WHERE br.return_date IS NULL AND br.due_date < CURDATE()
 
 ## 6. 已知阻塞
 
-- `02_后端线/04_init.sql` 目前只建了主键列，其余字段是 `-- TODO`；在补齐之前，任何按完整字段写的查询都会报"未知列"。
+- `src/backend/sql/04_init.sql` 目前只建了主键列，其余字段是 `-- TODO`；在补齐之前，任何按完整字段写的查询都会报"未知列"。
 - 遇到这种情况，按 `N1` 处理：**停手并反馈**，不自己改 `04_init.sql`、不自己建表、不改 `06_测试数据.sql` 迁就。
 
 ## 7. 禁止事项（硬性）

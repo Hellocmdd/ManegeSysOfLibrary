@@ -1,13 +1,13 @@
 # code-style.md — 通用代码风格与实现约束
 
-适用：`03_前端线/` 下的 Python、Jinja2 模板、CSS 与少量 JS。Python 细则见 `python-style.md`，SQL 见 `sql-style.md`，模板与页面见 `web-style.md`，注释见 `comment-style.md`。
+适用：`src/frontend/` 下的 Python、Jinja2 模板、CSS 与少量 JS。Python 细则见 `python-style.md`，SQL 见 `sql-style.md`，模板与页面见 `web-style.md`，注释见 `comment-style.md`。
 
 ## 1. 目录与文件
 
-- 只改 `03_前端线/`。`01_设计线/`、`02_后端线/` 是只读输入。
+- 只改 `src/frontend/`。`docs/`、`src/backend/sql/` 是只读输入。
 - 不新建顶层目录，不改 `00_分工与进度.md` 第四节的目录结构与文件编号（`04_`、`05_`、`06_`、`08_`、`09_` 都由该文件规定）。
 - 默认文件集合：`app.py`、`config.py`、`requirements.txt`、`templates/`、`static/style.css`、`08_前端页面截图/`、`09_查询样例.sql`。
-- `app.py` 超过约 400 行再考虑拆分（`db.py` / `queries.py` / `reports.py`）；拆分前先确认，并在 `03_前端线/README.md` 的目录结构中补登记，不偷偷加文件。
+- `app.py` 超过约 400 行再考虑拆分（`db.py` / `queries.py` / `reports.py`）；拆分前先确认，并在 `src/frontend/README.md` 的目录结构中补登记，不偷偷加文件。
 - UTF-8 无 BOM；缩进 4 空格，不用 Tab。**不要在功能提交里顺手改整文件的换行符**，否则 diff 无法审阅。
 - 一个模板只负责一个页面；共用区块抽 `base.html` 的 `block`，不复制整段 HTML。
 

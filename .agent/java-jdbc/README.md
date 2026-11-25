@@ -5,8 +5,8 @@
 ## 与其他约定的关系
 
 - Git 流程以 `.agent/conventions/git-workflow.md` 与 `.agent/conventions/commit-push-confirm.md` 为准；本目录 `GIT_CONVENTIONS.md` 只提供 Java 项目的提交示例。
-- 表结构、存储过程、状态值与报表口径以 `02_后端线/*.sql` 和 `.agent/conventions/db-contract.md` 为准；本目录 `DESIGN_GUIDELINES.md` 中的表清单是开发骨架，冲突时以后者为准并向组内报告。
-- 前端沿用现有 `03_前端线/` 的 Flask 实现；`src/frontend/` 只是前后端分离目录占位，本次不改动前端框架与语言。
+- 表结构、存储过程、状态值与报表口径以 `src/backend/sql/*.sql` 和 `.agent/conventions/db-contract.md` 为准；本目录 `DESIGN_GUIDELINES.md` 中的表清单是开发骨架，冲突时以后者为准并向组内报告。
+- 前端实现已迁移到 `src/frontend/`，仍沿用 Flask + Jinja2；本次不改动其框架与语言。
 
 ## 文档索引
 

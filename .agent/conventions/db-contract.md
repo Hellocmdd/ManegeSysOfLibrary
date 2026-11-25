@@ -1,6 +1,6 @@
 # db-contract.md — 前端依赖的数据库契约
 
-本文件描述**前端在写查询时必须假定的事实**，以及与文档不一致、需要联调的地方。表结构与存储过程的权威定义在 `02_后端线/04_init.sql`、`05_存储过程.sql`；本文件只做前端视角的摘要，不复制整份建表脚本。
+本文件描述**前端在写查询时必须假定的事实**，以及与文档不一致、需要联调的地方。表结构与存储过程的权威定义在 `src/backend/sql/04_init.sql`、`05_存储过程.sql`；本文件只做前端视角的摘要，不复制整份建表脚本。
 
 ## 1. 表与前端用到的列
 
@@ -41,7 +41,7 @@ borrow_book(IN p_reader_id VARCHAR(32), IN p_copy_id VARCHAR(32), OUT p_result I
 | `-3` | 该读者在借已达 5 本 | 已借满 5 本，请先归还 |
 | `-4` | 其他错误（过程内已 `ROLLBACK`） | 借书失败，请稍后重试 |
 
-- 必须用 `CALL borrow_book(%s, %s, @p_result)`，再 `SELECT @p_result`；`03_前端线/README.md` 里的两参写法是旧稿，已失效。
+- 必须用 `CALL borrow_book(%s, %s, @p_result)`，再 `SELECT @p_result`；`src/frontend/README.md` 里的两参写法是旧稿，已失效。
 - 借期固定 30 天，由过程计算，前端不自己算 `due_date`。
 
 ### 3.2 `return_book`

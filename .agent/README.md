@@ -6,7 +6,7 @@
 
 - 本目录**不属于项目产出**：不参与运行、不被 Python 引用、不进最终报告与交付 ZIP 的说明里。
 - 本目录**不要加进 `.gitignore`**。团队共享是前提，忽略它会让各人的 AI 行为不一致。
-- 本目录只写"怎么协助开发"，不写"业务怎么实现"；表结构、存储过程与统计口径的事实放在 `02_后端线/*.sql` 与 `conventions/db-contract.md`。
+- 本目录只写"怎么协助开发"，不写"业务怎么实现"；表结构、存储过程与统计口径的事实放在 `src/backend/sql/*.sql` 与 `conventions/db-contract.md`。
 - 本目录**不写成员姓名和固定分工**，统一用"设计线 / 后端线 / 前端线"表达归属。
 
 ## 文件索引
@@ -38,7 +38,7 @@
 
 ## Java/JDBC 后端规范
 
-`java-jdbc/` 子目录补充 `src/backend/` 下 Java 21 + JDBC 工程的约定，不替代根目录提示词与 `conventions/`。其中表结构清单是开发骨架；若与 `02_后端线/*.sql` 或 `conventions/db-contract.md` 的事实不一致，应向组内报告差异，不自行择一执行。
+`java-jdbc/` 子目录补充 `src/backend/` 下 Java 21 + JDBC 工程的约定，不替代根目录提示词与 `conventions/`。其中表结构清单是开发骨架；若与 `src/backend/sql/*.sql` 或 `conventions/db-contract.md` 的事实不一致，应向组内报告差异，不自行择一执行。
 
 ## 使用方式
 
@@ -54,5 +54,5 @@
 3. 新增**协作场景**：在根目录建独立 `.md`，并在本 README 登记。
 4. 新增**通用规范**：在 `conventions/` 下建独立 `.md`，并在本 README 与 `conventions/README.md` 双重登记。
 5. 新增 **Java/JDBC 子规范**：在 `java-jdbc/` 下维护，并在本 README 文件索引保留入口。
-6. 修改后自检：是否与 `02_后端线/*.sql` 的事实冲突？是否与硬约束 N1–N14 冲突？是否出现具体人名或固定分工？
+6. 修改后自检：是否与 `src/backend/sql/*.sql` 的事实冲突？是否与硬约束 N1–N14 冲突？是否出现具体人名或固定分工？
 7. 目录随仓库提交；改动后由修改者在 PR 描述里写明"改了哪条规则、为什么"。

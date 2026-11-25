@@ -6,8 +6,8 @@
 
 - 一份文档只有一个主题；跨主题的内容拆文件，不写成"大杂烩"。
 - `00_分工与进度.md` 是进度与交付物的登记表，其他文档不复述它的内容，只引用。
-- `03_前端线/README.md` 写"怎么跑、有哪些页面、用到哪些接口"；实现细节与代码风格写在 `.agent/`，不在 README 里重复。
-- 数据库事实（表、字段、过程、口径）写进 `.agent/conventions/db-contract.md` 与 `02_后端线/*.sql`，README 只写用法。
+- `src/frontend/README.md` 写"怎么跑、有哪些页面、用到哪些接口"；实现细节与代码风格写在 `.agent/`，不在 README 里重复。
+- 数据库事实（表、字段、过程、口径）写进 `.agent/conventions/db-contract.md` 与 `src/backend/sql/*.sql`，README 只写用法。
 
 ## 2. 结构
 

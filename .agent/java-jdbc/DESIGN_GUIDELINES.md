@@ -48,7 +48,7 @@ src/backend/main/java/com/library/
 
 ## 4. 交付与验证
 
-- 数据库脚本统一放在 `docs/04_数据库实现/`：
+- 数据库脚本统一放在 `src/backend/sql/java/`：
   - `create_tables.sql`
   - `insert_data.sql`
   - `query.sql`
