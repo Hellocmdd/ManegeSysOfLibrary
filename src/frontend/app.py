@@ -3,11 +3,11 @@
 
 启动：
 
-    python 03_前端线/app.py
+    python src/frontend/app.py
 
 访问 http://127.0.0.1:5000 ，用测试数据里的管理员账号登录。
 
-路由与 03_前端线/README.md 的功能清单一一对应；所有写操作都走 POST，
+路由与 src/frontend/README.md 的功能清单一一对应；所有写操作都走 POST，
 数据库访问全部经由 ``db.py`` 与 ``queries.py``，本文件不出现 SQL 字面量。
 """
 

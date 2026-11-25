@@ -55,7 +55,7 @@ def _translate(exc: pymysql.err.MySQLError) -> DbError:
     if code == 1054:
         return DbError("数据库字段尚未就绪（未知列），需后端线补齐 04_init.sql。", code)
     if code == 1146:
-        return DbError("数据表不存在，请先执行 02_后端线/04_init.sql。", code)
+        return DbError("数据表不存在，请先执行 src/backend/sql/04_init.sql。", code)
     return DbError(f"数据库操作失败：{detail}", code)
 
 
