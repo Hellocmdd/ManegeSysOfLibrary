@@ -173,7 +173,7 @@ RUN_DB_INTEGRATION=1 src/frontend/.venv/bin/python -m pytest -q -m integration
 RUN_DB_INTEGRATION=1 mvn test
 ```
 
-CI 配置在 `.github/workflows/ci.yml`，包含 Java、前端测试和前后端契约三个作业；真实数据库冒烟默认不在 CI 中运行。
+CI 配置在 `.github/workflows/ci.yml`，包含 Java 构建测试、前端测试、前后端契约和 Docker MySQL 真库集成四类作业。真库集成在 Ubuntu 上用临时容器执行，不连接远程库，也不需要向 CI 配置真实数据库密码。
 
 ## 许可
 
