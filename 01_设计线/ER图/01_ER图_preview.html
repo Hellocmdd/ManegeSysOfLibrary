@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>图书管理系统 · ER 图</title>
+<style>
+  body {
+    font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+    background: #ffffff;
+    margin: 0;
+    padding: 40px;
+  }
+  h1 {
+    text-align: center;
+    color: #2c3e50;
+    font-size: 22px;
+    margin-bottom: 30px;
+  }
+  h1 .sub { font-size: 14px; color: #7f8c8d; display: block; margin-top: 6px; }
+  .mermaid {
+    display: flex;
+    justify-content: center;
+  }
+  svg { max-width: 100%; height: auto; }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({ startOnLoad: true, theme: 'default', securityLevel: 'loose' });
+</script>
+</head>
+<body>
+  <h1>
+    图书管理系统 ER 图
+    <span class="sub">张展博 · 2026-11-25</span>
+  </h1>
+  <div class="mermaid">
+erDiagram
+    READER {
+        string reader_id PK "读者编号"
+        string name        "姓名"
+        string sex         "性别"
+        string phone       "联系电话"
+        string email       "邮箱"
+        date   reg_date    "注册日期"
+        int    status      "账户状态"
+    }
+    ADMIN {
+        string admin_id PK "管理员编号"
+        string name        "姓名"
+        string account     "登录账号"
+        string pwd         "密码"
+        string role        "角色"
+    }
+    BOOK {
+        string book_id    PK "书籍编号"
+        string isbn        "ISBN"
+        string title       "书名"
+        string author      "作者"
+        string publisher   "出版社"
+        date   pub_date    "出版日期"
+        text   descr       "简介"
+        string cat_id     FK "分类编号"
+    }
+    COPY {
+        string copy_id    PK "副本编号"
+        string book_id    FK "书籍编号"
+        string asset_no    "馆藏编号"
+        string location    "存放位置"
+        int    is_available "是否在馆"
+    }
+    CATEGORY {
+        string cat_id     PK "分类编号"
+        string cat_name    "分类名"
+        string parent_id  FK "父分类编号"
+    }
+    BORROW {
+        string borrow_id  PK "借阅记录编号"
+        string reader_id  FK "读者编号"
+        string copy_id    FK "副本编号"
+        date   borrow_date "借出日期"
+        date   due_date    "应还日期"
+        date   return_date "实际归还日期"
+        string status      "状态"
+        int    is_overdue  "是否逾期"
+        string admin_id   FK "管理员编号"
+        datetime handle_time "处理时间"
+    }
+    READER  ||--o{ BORROW  : "发起借阅(1:N)"
+    ADMIN   ||--o{ BORROW  : "处理归还(1:N)"
+    BOOK    ||--o{ COPY    : "拥有副本(1:N)"
+    CATEGORY ||--o{ BOOK   : "分类归属(1:N)"
+    CATEGORY ||--o{ CATEGORY : "父子分类(自引用)"
+    COPY    ||--o{ BORROW  : "被借阅(1:N)"
+  </div>
+</body>
+</html>

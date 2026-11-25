@@ -1,83 +1,127 @@
 -- ====================================================================
 -- 图书管理系统 · init.sql（建库建表）
--- 作者：谭博友
+-- 作者：谭博友 / 张展博（字段类型按 03_数据字典.xlsx 填充）
 -- 数据库：MySQL 8.0 · InnoDB · utf8mb4
--- 依赖：请先看 02_关系模式.md 和 03_数据字典.xlsx（展博 11/28 交付）
--- 执行顺序：按文件顺序跑；如需清空重跑，先执行 DROP 再 CREATE
+-- 执行顺序：按文件顺序跑
+--   source 04_init.sql;      ← 本文件
+--   source 05_存储过程.sql;
+--   source 06_测试数据.sql;
 -- ====================================================================
 
--- 1. 设置字符集 + 外码检查（InnoDB 才支持外码）
 SET NAMES utf8mb4;
-SET FOREIGN_KEY_CHECKS = 1;   -- 开启外码约束
+SET FOREIGN_KEY_CHECKS = 1;
 
--- 2. 创建数据库
-CREATE DATABASE IF NOT EXISTS library_system
+DROP DATABASE IF EXISTS library_system;
+CREATE DATABASE library_system
     DEFAULT CHARACTER SET utf8mb4
     DEFAULT COLLATE utf8mb4_unicode_ci;
 
 USE library_system;
 
 -- ====================================================================
--- TODO（谭博友）：以下 6 张表的字段、类型、约束请根据 03_数据字典.xlsx 填充
--- 目前只有表名和 PK/FK 骨架，类型占位为 VARCHAR(32)
+-- 表 1: Reader 读者
 -- ====================================================================
-
--- --- 表 1: Reader 读者 ---
 CREATE TABLE Reader (
-    reader_id  VARCHAR(32) NOT NULL,
-    -- TODO 其他字段（姓名、性别、电话、邮箱、注册日期、状态）
+    reader_id  VARCHAR(32)  NOT NULL  COMMENT '读者编号，唯一主键，如 R001',
+    name       VARCHAR(50)  NOT NULL  COMMENT '真实姓名',
+    sex        ENUM('男','女') NOT NULL DEFAULT '男' COMMENT '性别',
+    phone      VARCHAR(20)  YES       DEFAULT NULL COMMENT '联系电话',
+    email      VARCHAR(100) YES       DEFAULT NULL COMMENT '邮箱',
+    reg_date   DATE         NOT NULL  COMMENT '注册日期',
+    status     TINYINT(1)   NOT NULL  DEFAULT 1 COMMENT '账户状态：1正常/0禁用',
     PRIMARY KEY (reader_id)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='读者表';
 
--- --- 表 2: Admin 管理员 ---
+-- ====================================================================
+-- 表 2: Admin 管理员（公司职员）
+-- ====================================================================
 CREATE TABLE Admin (
-    admin_id  VARCHAR(32) NOT NULL,
-    -- TODO 其他字段（姓名、账号、密码、角色）
+    admin_id  VARCHAR(32)  NOT NULL  COMMENT '管理员编号，唯一主键',
+    name      VARCHAR(50)  NOT NULL  COMMENT '真实姓名',
+    account   VARCHAR(50)  NOT NULL  COMMENT '登录账号',
+    pwd       VARCHAR(255) NOT NULL  COMMENT '密码，SHA256 哈希存储（绝对禁止明文）',
+    role      ENUM('普通','超级') NOT NULL DEFAULT '普通' COMMENT '角色',
     PRIMARY KEY (admin_id),
-    -- TODO: UNIQUE INDEX idx_account (account)
-) ENGINE=InnoDB;
+    UNIQUE INDEX idx_admin_account (account)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='管理员表';
 
--- --- 表 3: Category 分类（支持多级） ---
+-- ====================================================================
+-- 表 3: Category 分类（支持多级父子关系）
+-- ====================================================================
 CREATE TABLE Category (
-    cat_id    VARCHAR(32) NOT NULL,
-    -- TODO: cat_name, parent_id
+    cat_id    VARCHAR(32)  NOT NULL  COMMENT '分类编号',
+    cat_name  VARCHAR(50)  NOT NULL  COMMENT '分类名称，如 计算机',
+    parent_id VARCHAR(32)  YES       DEFAULT NULL COMMENT '父分类编号，根节点为 NULL（自引用外码）',
     PRIMARY KEY (cat_id),
-    -- TODO: FOREIGN KEY (parent_id) REFERENCES Category(cat_id) ON DELETE SET NULL
-) ENGINE=InnoDB;
+    INDEX idx_parent_id (parent_id),
+    CONSTRAINT fk_category_parent FOREIGN KEY (parent_id)
+        REFERENCES Category(cat_id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='分类表（支持多级）';
 
--- --- 表 4: Book 书籍 ---
+-- ====================================================================
+-- 表 4: Book 书籍（书名等共享信息，不含副本）
+-- ====================================================================
 CREATE TABLE Book (
-    book_id   VARCHAR(32) NOT NULL,
-    -- TODO: isbn, title, author, publisher, pub_date, descr, cat_id
+    book_id   VARCHAR(32)  NOT NULL  COMMENT '书籍编号',
+    isbn      VARCHAR(20)  YES       DEFAULT NULL COMMENT 'ISBN 国际标准书号',
+    title     VARCHAR(200) NOT NULL  COMMENT '书名',
+    author    VARCHAR(100) YES       DEFAULT NULL COMMENT '作者，可多作者逗号分隔',
+    publisher VARCHAR(100) YES       DEFAULT NULL COMMENT '出版社',
+    pub_date  DATE         YES       DEFAULT NULL COMMENT '出版日期',
+    descr     TEXT         YES       DEFAULT NULL COMMENT '简介/目录，长文本',
+    cat_id    VARCHAR(32)  YES       DEFAULT NULL COMMENT '所属分类编号 → Category.cat_id',
     PRIMARY KEY (book_id),
-    -- TODO: FOREIGN KEY (cat_id) REFERENCES Category(cat_id)
-) ENGINE=InnoDB;
+    INDEX idx_book_title (title),
+    INDEX idx_book_cat   (cat_id),
+    CONSTRAINT fk_book_category FOREIGN KEY (cat_id)
+        REFERENCES Category(cat_id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='书籍表（不含副本）';
 
--- --- 表 5: Copy 书籍副本 ---
+-- ====================================================================
+-- 表 5: Copy 书籍副本（实际借还的对象）
+-- ====================================================================
 CREATE TABLE Copy (
-    copy_id   VARCHAR(32) NOT NULL,
-    -- TODO: book_id, asset_no, location, is_available
+    copy_id       VARCHAR(32) NOT NULL  COMMENT '副本编号',
+    book_id       VARCHAR(32) NOT NULL  COMMENT '所属书籍编号 → Book.book_id',
+    asset_no      VARCHAR(32) NOT NULL  COMMENT '馆藏编号，贴在书脊上的标签号',
+    location      VARCHAR(100) YES       DEFAULT NULL COMMENT '存放位置，如 二楼A区-01架',
+    is_available  TINYINT(1)  NOT NULL  DEFAULT 1 COMMENT '是否在馆：1在馆/0借出（应用层+事务维护）',
     PRIMARY KEY (copy_id),
-    -- TODO: FOREIGN KEY (book_id) REFERENCES Book(book_id) ON DELETE CASCADE
-    -- TODO: UNIQUE INDEX idx_asset_no (asset_no)
-) ENGINE=InnoDB;
+    UNIQUE INDEX idx_copy_asset_no (asset_no),
+    INDEX idx_copy_book_id  (book_id),
+    CONSTRAINT fk_copy_book FOREIGN KEY (book_id)
+        REFERENCES Book(book_id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='书籍副本表';
 
--- --- 表 6: Borrow 借阅记录 ---
+-- ====================================================================
+-- 表 6: Borrow 借阅记录
+-- ====================================================================
 CREATE TABLE Borrow (
-    borrow_id VARCHAR(32) NOT NULL,
-    -- TODO: reader_id, copy_id, borrow_date, due_date, return_date,
-    --       status, is_overdue, admin_id, handle_time
+    borrow_id   VARCHAR(32) NOT NULL  COMMENT '借阅记录编号',
+    reader_id   VARCHAR(32) NOT NULL  COMMENT '读者编号 → Reader.reader_id',
+    copy_id     VARCHAR(32) NOT NULL  COMMENT '借出的副本编号 → Copy.copy_id',
+    borrow_date DATE        NOT NULL  COMMENT '借出日期',
+    due_date    DATE        NOT NULL  COMMENT '应还日期（借出+30天）',
+    return_date DATE        YES       DEFAULT NULL COMMENT '实际归还日期，NULL=尚未归还',
+    status      VARCHAR(10) NOT NULL  COMMENT '状态：在借/已归还/已逾期（冗余，方便前端筛选）',
+    is_overdue  TINYINT(1)  NOT NULL  DEFAULT 0 COMMENT '是否逾期：1逾期/0未逾期（冗余，触发器每日维护）',
+    admin_id    VARCHAR(32) YES       DEFAULT NULL COMMENT '处理归还的管理员编号，NULL=尚未归还',
+    handle_time DATETIME    YES       DEFAULT NULL COMMENT '处理时间（管理员处理归还时刻）',
     PRIMARY KEY (borrow_id),
-    -- TODO: FOREIGN KEY (reader_id) REFERENCES Reader(reader_id)
-    -- TODO: FOREIGN KEY (copy_id)   REFERENCES Copy(copy_id)
-    -- TODO: FOREIGN KEY (admin_id)  REFERENCES Admin(admin_id) ON DELETE SET NULL
-    -- TODO: INDEX idx_reader_date (reader_id, borrow_date)   -- 加快读者历史查询
-    -- TODO: INDEX idx_copy_available (copy_id, return_date) -- 加快在馆判断
-) ENGINE=InnoDB;
+    INDEX idx_borrow_reader_date (reader_id, borrow_date DESC),  -- 读者历史借阅
+    INDEX idx_borrow_copy        (copy_id, return_date),        -- 副本在馆判断
+    INDEX idx_borrow_status      (status),                      -- 按状态筛选
+    CONSTRAINT fk_borrow_reader FOREIGN KEY (reader_id)
+        REFERENCES Reader(reader_id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT fk_borrow_copy FOREIGN KEY (copy_id)
+        REFERENCES Copy(copy_id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT fk_borrow_admin FOREIGN KEY (admin_id)
+        REFERENCES Admin(admin_id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='借阅记录表';
 
 -- ====================================================================
--- 完成后：
--- 1. 跑一下 06_测试数据.sql 验证建表没问题
--- 2. 跑一下 05_存储过程.sql 验证存储过程能编译
--- 3. 提交给段绪礼，让他跑通后端
+-- 执行验证
 -- ====================================================================
+SELECT '建库完成！当前共有 ' AS info, COUNT(*) AS table_count
+  FROM information_schema.tables
+ WHERE table_schema = DATABASE();
