@@ -32,7 +32,7 @@ src/frontend  Flask + Jinja2 + 原生 HTML/CSS → 登录 → 书目查询 → �
 | `Copy` | `copy_id` | `book_id → Book` | asset_no（唯一）、location、is_available |
 | `Borrow` | `borrow_id` | `reader_id`、`copy_id`、`admin_id`（可空） | borrow_date、due_date、return_date、status、is_overdue、handle_time |
 
-反范式字段：`Copy.is_available`、`Borrow.is_overdue`、`Borrow.status`。它们由应用层事务与触发器维护，**前端只读不改**。
+反范式字段：`Copy.is_available`、`Borrow.is_overdue`、`Borrow.status`。它们由 `borrow_book` / `return_book` / `renew_book` 三个存储过程在事务内维护；当前没有每日触发器，`is_overdue` 在还书时按当时是否超期写入、续借时归 0。前端只读不改。
 
 ### 三个存储过程的真实签名（以 `src/backend/sql/05_存储过程.sql` 为准）
 
@@ -48,10 +48,10 @@ src/frontend  Flask + Jinja2 + 原生 HTML/CSS → 登录 → 书目查询 → �
 - **状态值是中文枚举**：`Borrow.status ∈ {'在借', '已归还', '已逾期'}`；`Reader.status` 1 正常 / 0 禁用；`Copy.is_available` 1 在馆 / 0 借出；`Borrow.is_overdue` 0 / 1。
 - **管理员密码在 SQL 侧比较**：`WHERE account = %s AND pwd = SHA2(%s, 256)`；测试账号 `admin / 123456`。明文密码不落库、不进代码。
 - **读者登录只校验 `reader_id + name`**：读者表没有密码字段。这是课程范围决定的，写进 README 的"已知限制"，不能描述成"安全登录"。
-- **当前门禁**：`04_init.sql` 还是骨架（除 `*_id` 外字段全是 TODO 注释），而 `06_测试数据.sql` 已按完整字段插入 20 本书 / 30 个副本 / 15 条借阅。**init.sql 补齐前，任何查询都会报"未知列"**——这是后端线的交付节点，前端不得自行改表结构绕过。
-- **逾期口径有歧义**：`is_overdue = 1` 也包含"已归还但当时逾期"的历史记录（测试数据里 4 条 `is_overdue=1`，其中 2 条已归还）。报表③若指"当前逾期"，必须加 `return_date IS NULL`，并在页面标题写明口径。
-- **数据量**：读者 10、书籍 20、副本 30、借阅 15（在借 7、已归还 8、当前逾期 2）。
-- **截止 2026-12-04**，无 CI，全部手动执行；交付 ZIP 命名按 `README.md` 末尾约定（`姓名+学号.zip`），不要改格式。
+- **表结构已就绪**：`04_init.sql` 已按数据字典补齐全部字段、CHECK 与外键；`src/backend/sql/java/` 三份脚本是同口径同步副本。任何查询都按这六张表写，前端不得自行改表结构绕过。
+- **逾期口径已固定**：`is_overdue = 1` 表示"曾逾期"，包含已归还的历史记录（基线 4 条，其中 BR005、BR015 已归还）。当前逾期必须用 `return_date IS NULL AND due_date < CURDATE()`（基线 2 条：BR004、BR009），页面标题写明口径。
+- **数据量**：管理员 10、分类 11、读者 10、书籍 20、副本 30、借阅 15；当前未归还 8（在借 6、当前逾期 2）、已归还 7、曾逾期 4。
+- **截止 2026-12-04**，CI 已配置 Java / 前端 / 前后端契约作业；真库集成默认跳过，需 `RUN_DB_INTEGRATION=1`（当前已授权并通过 7 个 Java 用例与 1 个前端冒烟）。交付 ZIP 命名按 `README.md` 末尾约定（`姓名+学号.zip`），不要改格式。
 - **托管远端以 `git remote -v` 为准**，不要照抄文档里的平台名。
 
 ### 常用命令（项目根目录执行）
@@ -117,7 +117,7 @@ python -m compileall -q src/frontend
 - **N11 `.agent/` 不写成员姓名与固定分工**：用"设计线 / 后端线 / 前端线"表达归属。
 - **N12 不提交构建与本地文件**：`__pycache__/`、`*.pyc`、`.venv/`、`.env`、`config_secret.py`、IDE 配置一律不入库；`08_前端页面截图/` 是交付物，要提交。
 - **N13 依赖最小化**：Flask + 一个 MySQL 驱动即可（Jinja2 随 Flask）。不引入 ORM、前端框架、CDN 资源（答辩机器可能离线）。新增依赖要说明理由并等确认。
-- **N14 不扩范围**：本次不做用户注册/改密、角色权限细分、图书与副本的增删改管理、Excel 导出、图表库、线上部署、CI。要加先问。
+- **N14 不扩范围**：本次不做用户注册/改密、角色权限细分、图书与副本的增删改管理、Excel 导出、图表库、线上部署；CI 已存在并保持现状，真库集成按 `RUN_DB_INTEGRATION` 门控。要加先问。
 
 ## 六、默认工作流
 

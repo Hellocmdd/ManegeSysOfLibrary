@@ -12,7 +12,7 @@
 | 成员   | 角色        | 主线         | 核心职责                                                              |
 | ------ | ----------- | ------------ | --------------------------------------------------------------------- |
 | 张展博 | 建模 & 文档 | 数据库设计线 | 概念建模（ER 图）→ 逻辑设计（关系模式）→ 物理设计（数据字典）       |
-| 谭博友 | 后端 & SQL  | 实现线       | MySQL 建库建表 → 存储过程/触发器 → 示例数据 → Java/JDBC 命令行程序 |
+| 谭博友 | 后端 & SQL  | 实现线       | MySQL 建库建表 → 借还续存储过程 → 示例数据 → Java/JDBC 命令行程序 |
 | 段绪礼 | 前端 & 报表 | 应用线       | Flask 页面 + 各类查询/统计/报表                                       |
 
 详细任务、排期与依赖见 [docs/00_分工与进度.md](docs/00_分工与进度.md)。该文件是唯一有效的分工与进度登记文档；如有差异，以它与课程任务书为准并向组内报告。
@@ -85,7 +85,7 @@ ManegeSysOfLibrary/
 ### 后端（Java/JDBC）
 
 1. 复制根目录 `.env.example` 为根目录 `.env`，填写数据库与 Flask 配置；密码只写本地 `.env`，不要提交。
-2. 导入数据库脚本：现有脚本在 `src/backend/sql/04_init.sql`、`05_存储过程.sql`、`06_测试数据.sql`；Java 配套骨架在 `src/backend/sql/java/`。
+2. 导入数据库脚本：按 `src/backend/sql/04_init.sql` → `05_存储过程.sql` → `06_测试数据.sql` 顺序执行；`src/backend/sql/java/` 下三份脚本是与权威脚本同口径的配套副本。当前远程库已授予 `REFERENCES`，三步脚本已实际执行通过。
 3. 测试 JDBC 连接：
 
 ```bash
@@ -120,6 +120,9 @@ src/frontend/.venv/bin/python -m pytest -q -m "not integration"
 
 # 真实数据库冒烟（需能连上远程 MySQL）
 RUN_DB_INTEGRATION=1 src/frontend/.venv/bin/python -m pytest -q -m integration
+
+# Java 真库集成测试（同样由 RUN_DB_INTEGRATION 门控，默认跳过）
+RUN_DB_INTEGRATION=1 mvn test
 ```
 
 CI 配置在 `.github/workflows/ci.yml`，包含 Java、前端测试和前后端契约三个作业；真实数据库冒烟默认不在 CI 中运行。
