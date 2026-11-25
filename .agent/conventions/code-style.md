@@ -63,7 +63,8 @@ BORROW_MSG: dict[int, str] = {
 
 ## 6. 依赖边界
 
-- 运行依赖只有 Flask、一个 MySQL 驱动（`mysql-connector-python` 或 `PyMySQL`，二选一写进 `requirements.txt`）。
+- 运行依赖只有 Flask 与 **PyMySQL**（`requirements.txt` 里就是这两行）；换驱动要先说明理由并改本文件，不要两个驱动同时装。
+- `requirements.txt` 保持纯 ASCII：Windows 上 pip 按系统 locale（GBK）解码该文件，UTF-8 中文注释会直接抛 `UnicodeDecodeError`。
 - 不用 ORM（SQLAlchemy 等）、不用 pandas 做统计、不引前端框架与 CDN 资源；统计交给 SQL。
 - 新增依赖要说明用途、版本与离线可用性，等确认后再加。
 - `requirements.txt` 写实际使用的包与版本范围，交付前用 `pip freeze` 核对；不把整个全局环境的包倒进去。
