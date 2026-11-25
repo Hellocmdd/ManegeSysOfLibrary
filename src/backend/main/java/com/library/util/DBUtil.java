@@ -11,7 +11,7 @@ import java.util.Properties;
 import java.util.logging.Logger;
 
 /**
- * 数据库连接工具：优先读取环境变量，其次读取项目根目录的 .env。
+ * 数据库连接工具：优先读取环境变量，其次从仓库根目录向上查找 .env。
  */
 public final class DBUtil {
 
@@ -25,10 +25,15 @@ public final class DBUtil {
         String host = get("DB_HOST", "127.0.0.1");
         String port = get("DB_PORT", "3306");
         String database = get("DB_NAME", "storageoflibrarysys");
-        String url = String.format(
-                "jdbc:mysql://%s:%s/%s?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai",
+        return DriverManager.getConnection(
+                buildUrl(host, port, database), get("DB_USER", ""), get("DB_PASSWORD", ""));
+    }
+
+    static String buildUrl(String host, String port, String database) {
+        return String.format(
+                "jdbc:mysql://%s:%s/%s?useUnicode=true&characterEncoding=utf8"
+                        + "&connectionCollation=utf8mb4_unicode_ci&serverTimezone=Asia/Shanghai",
                 host, port, database);
-        return DriverManager.getConnection(url, get("DB_USER", ""), get("DB_PASSWORD", ""));
     }
 
     public static void close(AutoCloseable closeable) {
@@ -56,8 +61,9 @@ public final class DBUtil {
 
     private static Properties loadConfig() {
         Properties properties = new Properties();
-        Path envFile = Path.of(".env");
-        if (!Files.exists(envFile)) {
+        Path envFile = findEnvFile();
+        if (envFile == null) {
+            LOG.warning("未找到 .env，将仅使用环境变量与默认值");
             return properties;
         }
         try (InputStream in = Files.newInputStream(envFile)) {
@@ -66,5 +72,17 @@ public final class DBUtil {
             LOG.warning("无法读取 .env，将仅使用环境变量: " + e.getMessage());
         }
         return properties;
+    }
+
+    private static Path findEnvFile() {
+        Path dir = Path.of("").toAbsolutePath();
+        for (int i = 0; i < 8 && dir != null; i++) {
+            Path candidate = dir.resolve(".env");
+            if (Files.isRegularFile(candidate)) {
+                return candidate;
+            }
+            dir = dir.getParent();
+        }
+        return null;
     }
 }

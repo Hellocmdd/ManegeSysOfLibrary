@@ -2,9 +2,9 @@ package com.library.util;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 
 /**
  * Java/JDBC 连通性自检工具。仅读取元数据，不修改数据库。
@@ -35,8 +35,8 @@ public final class ConnectionCheck {
                     + " " + meta.getDatabaseProductVersion());
             System.out.println("当前库: " + conn.getCatalog());
             System.out.println("登录用户: " + meta.getUserName());
-            try (Statement st = conn.createStatement();
-                 ResultSet rs = st.executeQuery("SELECT VERSION() AS server_version")) {
+            try (PreparedStatement ps = conn.prepareStatement("SELECT VERSION() AS server_version");
+                 ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     System.out.println("SELECT VERSION(): " + rs.getString("server_version"));
                 }
