@@ -9,7 +9,7 @@
 | SQL 脚本 | `src/backend/sql/04_init.sql`、`05_存储过程.sql`、`06_测试数据.sql` | 空库上按顺序执行无报错；表、过程、数据齐全 |
 | 前端源码 | `src/frontend/app.py`、`config.py`、`requirements.txt`、`templates/`、`static/` | 按 README 步骤能起、能走通主流程 |
 | 页面截图 | `08_前端页面截图/` | 来自真实运行页面，文件名体现页面与状态 |
-| 查询样例 | `src/frontend/09_查询样例.sql` | 每条可单独执行，注释写明用途与口径 |
+| 查询样例 | `docs/08_前端交付物/09_查询样例.sql` | 每条可单独执行，注释写明用途与口径 |
 | 文档 | 根 `README.md`、各线 `README.md`、报告 | 启动步骤可复现；无占位符；无明文密码 |
 | 打包 | `姓名+学号.zip` | 解压后可直接按 README 跑起来 |
 
@@ -34,7 +34,7 @@ mysql -u root -p --default-character-set=utf8mb4 library < $env:TEMP\library_dum
 
 - 重建后核对行数：读者 10、图书 20、副本 30、借阅 15。
 - 导出文件里若出现真实密码（连接串、`IDENTIFIED BY`），改掉后再提交。
-- 导出物默认不提交；确需随交付提交时，先按 `00_分工与进度.md` 的登记表申请编号，不自行起编号。
+- 导出物默认不提交；确需随交付提交时，先按 `docs/00_分工与进度.md` 的登记表申请编号，不自行起编号。
 
 ## 4. 截图归档
 
@@ -48,14 +48,14 @@ mysql -u root -p --default-character-set=utf8mb4 library < $env:TEMP\library_dum
 ## 5. 文档收尾
 
 - 根 `README.md`：项目简介、目录说明、环境要求、从零启动步骤、已知限制。
-- `src/frontend/README.md`：页面清单、路由、依赖的存储过程与真实签名、验证记录、已知问题。
+- `docs/08_前端交付物/README.md`：页面清单、路由、依赖的存储过程与真实签名、验证记录、已知问题。
 - 已知限制如实写：`init.sql` 字段补齐情况、续借次数无数据库约束、读者登录只校验 `reader_id + name`、逾期口径。
 - 全仓搜索 `TODO(`：每条要么已解决、要么写明阻塞与依赖方；交付版本不留无主 TODO。
 - 搜索 `password`、`123456`、`root`：确认没有真实凭据。
 
 ## 6. 打包
 
-1. 顶层目录保留 `docs/`、`src/backend/sql/`、`src/frontend/`、`00_分工与进度.md`、`README.md`、`LICENSE`。
+1. 顶层目录保留 `docs/`、`src/backend/sql/`、`src/frontend/`、`README.md`、`LICENSE`。
 2. 排除：`.git/`、`.venv/`、`__pycache__/`、`*.pyc`、`.env`、`config_secret.py`、`.vscode/`、`*.log`、`.agent/`。
 3. ZIP 命名 `姓名+学号.zip`（格式固定，内容按成员分工填写）。
 4. 解压到新目录，按 README 走一遍启动流程，确认能跑通再提交。

@@ -1,4 +1,4 @@
-name: Java CI
+name: CI
 
 on:
   push:
@@ -10,7 +10,8 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  guard:
+    name: Secret guard
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -22,6 +23,18 @@ jobs:
             echo "::error::.env must not be committed"
             exit 1
           fi
+
+  java-build:
+    name: Java build and test (${{ matrix.os }})
+    needs: guard
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Set up JDK 21
         uses: actions/setup-java@v4
@@ -35,3 +48,81 @@ jobs:
 
       - name: Test
         run: mvn -B test
+
+  frontend-test:
+    name: Frontend tests (${{ matrix.os }})
+    needs: guard
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: src/frontend/requirements.txt
+
+      - name: Install dependencies
+        run: python -m pip install --disable-pip-version-check -r src/frontend/requirements.txt -r src/frontend/requirements-dev.txt
+
+      - name: Validate shell launchers
+        if: runner.os != 'Windows'
+        run: bash -n start.sh src/frontend/start.sh src/backend/start.sh
+
+      - name: Validate Windows launchers
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $files = @('start.bat', 'src/frontend/start.bat', 'src/backend/start.bat')
+          foreach ($file in $files) {
+            if (-not (Test-Path $file)) { throw "Missing launcher: $file" }
+            $bytes = [System.IO.File]::ReadAllBytes($file)
+            if ($bytes | Where-Object { $_ -gt 127 }) { throw "$file must be ASCII-only" }
+          }
+
+      - name: Pytest
+        run: python -m pytest -q -m "not integration"
+
+  integration-contract:
+    name: Frontend-backend contract (${{ matrix.os }})
+    needs: [java-build, frontend-test]
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: src/frontend/requirements.txt
+
+      - name: Compile Java backend
+        run: mvn -B -q -DskipTests compile
+
+      - name: Install frontend test dependencies
+        run: python -m pip install --disable-pip-version-check -r src/frontend/requirements.txt -r src/frontend/requirements-dev.txt
+
+      - name: Contract tests
+        run: python -m pytest -q src/frontend/tests/test_contract.py -m "not integration"
+
+      # Live DB smoke test is intentionally skipped in CI: remote credentials
+      # are not stored in the repository. Run locally with RUN_DB_INTEGRATION=1.

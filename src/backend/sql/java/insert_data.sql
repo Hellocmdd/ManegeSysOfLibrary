@@ -1,7 +1,7 @@
 -- 示例测试数据（最小种子）
 -- 要求：最终每张核心表不少于 10 条记录，且关联数据满足参照完整性。
 
-USE library_management;
+USE storageoflibrarysys;
 
 INSERT INTO category (category_name, description) VALUES
     ('计算机', '计算机科学与技术类图书'),

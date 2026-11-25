@@ -4,7 +4,7 @@
 -- 执行前提：先跑 04_init.sql + 05_存储过程.sql
 -- ====================================================================
 
-USE library_system;
+USE storageoflibrarysys;
 
 -- --- 管理员 1 人 ---
 INSERT INTO Admin (admin_id, name, account, pwd, role) VALUES

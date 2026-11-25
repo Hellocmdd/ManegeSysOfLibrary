@@ -44,7 +44,7 @@ src/frontend  Flask + Jinja2 + 原生 HTML/CSS → 登录 → 书目查询 → �
 
 ### 必须记住的事实
 
-- **借书要接 OUT 参数**：`CALL borrow_book(%s, %s, @p_result)` 之后必须再 `SELECT @p_result`，否则拿不到结果。`src/frontend/README.md` 里的 `CALL borrow_book(reader_id, copy_id)` 是简化写法，与实际定义不符，**以 `.sql` 为准**。
+- **借书要接 OUT 参数**：`CALL borrow_book(%s, %s, @p_result)` 之后必须再 `SELECT @p_result`，否则拿不到结果。`docs/08_前端交付物/README.md` 里的 `CALL borrow_book(reader_id, copy_id)` 是简化写法，与实际定义不符，**以 `.sql` 为准**。
 - **状态值是中文枚举**：`Borrow.status ∈ {'在借', '已归还', '已逾期'}`；`Reader.status` 1 正常 / 0 禁用；`Copy.is_available` 1 在馆 / 0 借出；`Borrow.is_overdue` 0 / 1。
 - **管理员密码在 SQL 侧比较**：`WHERE account = %s AND pwd = SHA2(%s, 256)`；测试账号 `admin / 123456`。明文密码不落库、不进代码。
 - **读者登录只校验 `reader_id + name`**：读者表没有密码字段。这是课程范围决定的，写进 README 的"已知限制"，不能描述成"安全登录"。
@@ -122,7 +122,7 @@ python -m compileall -q src/frontend
 ## 六、默认工作流
 
 1. **确认任务**：一行写出任务类型 + 涉及文件 + 改动范围。
-2. **取上下文**：读要改的文件、`conventions/db-contract.md` 对应表/过程、`00_分工与进度.md` 的交付节点；把本次相关约束列 3–6 条。
+2. **取上下文**：读要改的文件、`conventions/db-contract.md` 对应表/过程、`docs/00_分工与进度.md` 的交付节点；把本次相关约束列 3–6 条。
 3. **加载规范**：按第四节只加载需要的文件，不预读全部。
 4. **找冲突**：要偏离表结构、统计口径或模块边界时，先停下说明"偏离点 + 影响 + 可选方案"，等确认；发现文档与 `src/backend/sql/*.sql` 不一致，报告差异，不自行择一执行。
 5. **产出**：代码给完整文件 + 路径；多处修改给 diff；命令写全参数并注明执行目录。
@@ -141,7 +141,7 @@ python -m compileall -q src/frontend
 ## 八、交付前自检
 
 - [ ] 是否触碰 N1–N14 中任何一条？
-- [ ] 表名、字段名、存储过程参数与 `src/backend/sql/*.sql` 一致？（不是与 `src/frontend/README.md` 的简化示例一致）
+- [ ] 表名、字段名、存储过程参数与 `src/backend/sql/*.sql` 一致？（不是与 `docs/08_前端交付物/README.md` 的简化示例一致）
 - [ ] 每条 SQL 都参数化，`LIKE` 的 `%` 在参数里？
 - [ ] 借/还/续借的返回码与"静默 0 行"都处理了？
 - [ ] 报表有 `ORDER BY`、口径写在页面上、数字能对上测试数据？
@@ -154,7 +154,7 @@ python -m compileall -q src/frontend
 ## 九、禁区
 
 - 不改表结构与存储过程来"让我的页面跑通"；不写死数据冒充查询结果。
-- 不在没有授权时重命名目录、调整文件编号、改 `00_分工与进度.md` 的交付清单。
+- 不在没有授权时重命名目录、调整文件编号、改 `docs/00_分工与进度.md` 的交付清单。
 - 不用 `TODO`/`TBD` 掩盖必做项；没做完就说没做完。
 - 不把 `.agent/` 内容贴进 README、报告或代码注释。
 - 不代替成员填写贡献表、AI 核验表、答辩稿。

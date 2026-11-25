@@ -2,11 +2,11 @@
 -- 目标：远程 MySQL 9.7.2，引擎 InnoDB，字符集 utf8mb4
 -- 注意：执行前请确认账号具备 CREATE DATABASE 权限。
 
-CREATE DATABASE IF NOT EXISTS library_management
+CREATE DATABASE IF NOT EXISTS storageoflibrarysys
     DEFAULT CHARACTER SET utf8mb4
     COLLATE utf8mb4_unicode_ci;
 
-USE library_management;
+USE storageoflibrarysys;
 
 CREATE TABLE IF NOT EXISTS reader (
     reader_id   INT UNSIGNED NOT NULL AUTO_INCREMENT,

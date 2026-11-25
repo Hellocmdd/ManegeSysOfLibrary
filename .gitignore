@@ -55,3 +55,6 @@ config_secret.py
 .vscode/
 .idea/
 *.iml
+
+# logs
+logs/
