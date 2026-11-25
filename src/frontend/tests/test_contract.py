@@ -73,11 +73,20 @@ def test_root_launchers_create_env_before_starting_apps() -> None:
 
     env_copy = shell_launcher.index('cp "$ROOT_DIR/.env.example" "$ROOT_DIR/.env"')
     assert env_copy < shell_launcher.index('"$ROOT_DIR/src/frontend/start.sh"')
-    assert '"$ROOT_DIR/src/backend/start.sh"' not in shell_launcher
     assert windows_launcher.index('copy /y ".env.example" ".env"') < windows_launcher.index(
         'call "%~dp0src\\frontend\\start.bat"'
     )
-    assert 'start "Library Backend"' not in windows_launcher
+
+    assert "Usage: ./start.sh [--content=all|backend|frontend|database]" in shell_launcher
+    assert "--content=*)" in shell_launcher
+    for mode in ("all", "backend", "frontend", "database"):
+        assert f"{mode})" in shell_launcher, mode
+        assert f"--content={mode}" in windows_launcher, mode
+
+    assert '"$ROOT_DIR/src/backend/start.sh" --cli' in shell_launcher
+    assert 'call "%~dp0src\\backend\\start.bat" --cli' in windows_launcher
+    assert "docker compose up -d --wait" in shell_launcher
+    assert "docker compose up -d --wait" in windows_launcher
     assert '"--cli"' in backend_shell
 
 
