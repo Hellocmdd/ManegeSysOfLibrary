@@ -1,37 +1,86 @@
 #!/usr/bin/env bash
 # One-key launcher for the library project (Linux / macOS / WSL).
-# Frontend runs in the background; backend CLI stays in the foreground.
+# Usage: ./start.sh [--content=all|backend|frontend|database]
+#   all      Docker DB + JDBC check + Flask frontend in foreground
+#   backend  Docker DB + Java CLI in foreground
+#   frontend Flask frontend only (default)
+#   database Docker MySQL only
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$ROOT_DIR"
+
+print_usage() {
+    echo "Usage: ./start.sh [--content=all|backend|frontend|database]"
+    echo "  all       start database, check JDBC, then run frontend in foreground"
+    echo "  backend   start database, then run Java CLI in foreground"
+    echo "  frontend  run frontend only (default)"
+    echo "  database  start Docker MySQL only"
+}
+
+CONTENT="frontend"
+for arg in "$@"; do
+    case "$arg" in
+        --content=*)
+            CONTENT="${arg#--content=}"
+            ;;
+        -h|--help)
+            print_usage
+            exit 0
+            ;;
+        *)
+            echo "Unknown argument: $arg"
+            print_usage
+            exit 1
+            ;;
+    esac
+done
+
+case "$CONTENT" in
+    all|backend|frontend|database) ;;
+    *)
+        echo "Invalid --content value: $CONTENT"
+        print_usage
+        exit 1
+        ;;
+esac
 
 if [ ! -f "$ROOT_DIR/.env" ] && [ -f "$ROOT_DIR/.env.example" ]; then
     cp "$ROOT_DIR/.env.example" "$ROOT_DIR/.env"
     echo "[hint] created repo root .env from .env.example; fill DB_PASSWORD before connecting"
 fi
 
-LOG_DIR="$ROOT_DIR/logs"
-mkdir -p "$LOG_DIR"
-
-echo "== Library one-key launcher =="
-
-echo "[1/2] starting frontend in background ..."
-"$ROOT_DIR/src/frontend/start.sh" > "$LOG_DIR/frontend.log" 2>&1 &
-FRONTEND_PID=$!
-
-cleanup() {
-    kill "$FRONTEND_PID" 2>/dev/null || true
-    wait "$FRONTEND_PID" 2>/dev/null || true
+start_database() {
+    if ! command -v docker >/dev/null 2>&1; then
+        echo "Docker not found. Install Docker first, or use --content=frontend."
+        exit 1
+    fi
+    echo "== Starting Docker MySQL =="
+    docker compose up -d --wait
 }
-trap cleanup EXIT INT TERM
 
-sleep 2
-if ! kill -0 "$FRONTEND_PID" 2>/dev/null; then
-    echo "Frontend exited early. Check logs/frontend.log"
-else
-    echo "Frontend is running. Log: logs/frontend.log"
-fi
+echo "== Library launcher: $CONTENT =="
 
-echo "[2/2] starting backend in foreground ..."
-"$ROOT_DIR/src/backend/start.sh"
+case "$CONTENT" in
+    database)
+        start_database
+        echo "Database is up. Run ./start.sh --content=frontend to start the web app."
+        ;;
+    frontend)
+        echo "Browser: http://127.0.0.1:5000"
+        exec "$ROOT_DIR/src/frontend/start.sh"
+        ;;
+    backend)
+        start_database
+        exec "$ROOT_DIR/src/backend/start.sh" --cli
+        ;;
+    all)
+        start_database
+        echo "== Checking JDBC connection =="
+        "$ROOT_DIR/src/backend/start.sh"
+        echo "Browser: http://127.0.0.1:5000"
+        echo "Java CLI is available via: ./start.sh --content=backend"
+        echo "Press Ctrl+C to stop."
+        exec "$ROOT_DIR/src/frontend/start.sh"
+        ;;
+esac

@@ -12,13 +12,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 读者数据访问实现：只负责 SQL 执行与结果映射，不管理业务事务。
+ * 读者数据访问实现：显式列名、参数化查询，不管理业务事务。
  */
 public class ReaderDAOImpl implements ReaderDAO {
 
+    private static final String SELECT_COLUMNS =
+            "reader_id, name, sex, phone, email, reg_date, status";
+
     @Override
     public List<Reader> findAll() throws SQLException {
-        String sql = "SELECT reader_id, name, phone, status FROM reader ORDER BY reader_id";
+        String sql = "SELECT " + SELECT_COLUMNS + " FROM Reader ORDER BY reader_id";
         List<Reader> readers = new ArrayList<>();
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
@@ -31,34 +34,25 @@ public class ReaderDAOImpl implements ReaderDAO {
     }
 
     @Override
-    public Reader findById(int readerId) throws SQLException {
-        String sql = "SELECT reader_id, name, phone, status FROM reader WHERE reader_id = ?";
+    public Reader findById(String readerId) throws SQLException {
+        String sql = "SELECT " + SELECT_COLUMNS + " FROM Reader WHERE reader_id = ?";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, readerId);
+            ps.setString(1, readerId);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next() ? mapRow(rs) : null;
             }
         }
     }
 
-    @Override
-    public int insert(Reader reader) throws SQLException {
-        String sql = "INSERT INTO reader (name, phone, status) VALUES (?, ?, ?)";
-        try (Connection conn = DBUtil.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, reader.getName());
-            ps.setString(2, reader.getPhone());
-            ps.setString(3, reader.getStatus());
-            return ps.executeUpdate();
-        }
-    }
-
     private Reader mapRow(ResultSet rs) throws SQLException {
         return new Reader(
-                rs.getInt("reader_id"),
+                rs.getString("reader_id"),
                 rs.getString("name"),
+                rs.getString("sex"),
                 rs.getString("phone"),
-                rs.getString("status"));
+                rs.getString("email"),
+                rs.getDate("reg_date").toLocalDate(),
+                rs.getInt("status"));
     }
 }

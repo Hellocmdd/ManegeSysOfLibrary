@@ -116,13 +116,14 @@ def init_app(app: Flask) -> None:
     app.teardown_appcontext(close_db)
 
 
-def query_all(sql: str, params: tuple[Any, ...] = ()) -> list[dict[str, Any]]:
+def query_all(sql: str, params: tuple[Any, ...] | None = None) -> list[dict[str, Any]]:
     """
     执行查询并取回全部行。
 
     *Args:
         sql: 参数化 SQL，占位符统一写作 ``%s``。
-        params: 与占位符一一对应的参数元组，没有参数时为空元组。
+        params: 与占位符一一对应的参数元组；无参数时必须传 None，
+            否则 PyMySQL 会对含 ``%Y`` 等字面量的 SQL 做 Python 格式化并报错。
     *Return:
         行字典列表，列名即字典键；没有命中时返回空列表（不是 None）。
     """
@@ -135,13 +136,13 @@ def query_all(sql: str, params: tuple[Any, ...] = ()) -> list[dict[str, Any]]:
         raise _translate(exc) from exc
 
 
-def query_one(sql: str, params: tuple[Any, ...] = ()) -> dict[str, Any] | None:
+def query_one(sql: str, params: tuple[Any, ...] | None = None) -> dict[str, Any] | None:
     """
     执行查询并取回第一行。
 
     *Args:
         sql: 参数化 SQL，占位符统一写作 ``%s``。
-        params: 与占位符一一对应的参数元组。
+        params: 与占位符一一对应的参数元组；无参数时传 None。
     *Return:
         第一行的字典；没有命中时返回 None，调用方必须显式判断。
     """

@@ -12,7 +12,7 @@
 | 成员   | 角色        | 主线         | 核心职责                                                              |
 | ------ | ----------- | ------------ | --------------------------------------------------------------------- |
 | 张展博 | 建模 & 文档 | 数据库设计线 | 概念建模（ER 图）→ 逻辑设计（关系模式）→ 物理设计（数据字典）       |
-| 谭博友 | 后端 & SQL  | 实现线       | MySQL 建库建表 → 存储过程/触发器 → 示例数据 → Java/JDBC 命令行程序 |
+| 谭博友 | 后端 & SQL  | 实现线       | MySQL 建库建表 → 借还续存储过程 → 示例数据 → Java/JDBC 命令行程序 |
 | 段绪礼 | 前端 & 报表 | 应用线       | Flask 页面 + 各类查询/统计/报表                                       |
 
 详细任务、排期与依赖见 [docs/00_分工与进度.md](docs/00_分工与进度.md)。该文件是唯一有效的分工与进度登记文档；如有差异，以它与课程任务书为准并向组内报告。
@@ -72,20 +72,68 @@ ManegeSysOfLibrary/
 
 ### 一键启动
 
-| 平台                | 命令                     | 行为                                                               |
-| ------------------- | ------------------------ | ------------------------------------------------------------------ |
-| Windows             | 双击根目录 `start.bat` | 分别打开后端与前端窗口                                             |
-| Linux / macOS / WSL | `./start.sh`           | 前端后台运行，日志写入 `logs/frontend.log`；后端命令行保持在前台 |
+根目录启动脚本支持 `--content` 参数：
 
-单独启动：
+| 参数 | 行为 |
+| --- | --- |
+| 无参数 / `--content=frontend` | 仅启动 Flask 前端（默认，输出直接可见） |
+| `--content=all` | 启动 Docker 数据库 → JDBC 连接检查 → 前台启动 Flask 前端 |
+| `--content=backend` | 启动 Docker 数据库 → 前台启动 Java CLI |
+| `--content=database` | 仅启动 Docker MySQL |
 
-- 后端：`src/backend/start.bat` / `src/backend/start.sh`
-- 前端：`src/frontend/start.bat` / `src/frontend/start.sh`
+使用方式：
+
+```bash
+# Linux / macOS / WSL
+./start.sh --content=all
+./start.sh --content=backend
+./start.sh --content=frontend
+./start.sh --content=database
+```
+
+```bat
+rem Windows
+start.bat --content=all
+start.bat --content=backend
+start.bat --content=frontend
+start.bat --content=database
+```
+
+`all`、`backend`、`database` 需要本机已安装 Docker，并且 `.env` 中的 `DB_*` 指向 Docker 容器；`frontend` 不依赖 Docker。Java CLI 只在 `backend` 模式下交互启动。
+
+### 本地 Docker 数据库（可选）
+
+仓库根目录提供 `docker-compose.yml`，用 MySQL 8.4 容器替代远程库，便于离线答辩和重复重置测试数据。
+
+1. 复制 `.env.example` 为 `.env`，把数据库配置改为本地容器：
+   ```ini
+   DB_HOST=127.0.0.1
+   DB_PORT=3307
+   DB_NAME=storageoflibrarysys
+   DB_USER=library
+   DB_PASSWORD=<本地 library 用户口令>
+   MYSQL_ROOT_PASSWORD=<本地 root 口令>
+   ```
+2. 启动容器：
+   ```bash
+   docker compose up -d
+   docker compose ps
+   ```
+3. 首次启动时会自动按 `04_init.sql → 05_存储过程.sql → 06_测试数据.sql` 初始化；之后可直接运行前端和集成测试。
+4. 需要重新初始化（会清空容器数据卷）：
+   ```bash
+   docker compose down -v
+   docker compose up -d
+   ```
+
+该方案已在 MySQL 8.4.13 上验证：干净初始化后基线为借阅 15 / 当前逾期 2，Java 真库集成 25/25 通过，前端真库冒烟通过。
+
+远端 MySQL 9.7.2 仍可继续使用；切换方式就是修改 `.env` 里的 `DB_HOST` / `DB_PORT` / `DB_USER` / `DB_PASSWORD`。
 
 ### 后端（Java/JDBC）
 
 1. 复制根目录 `.env.example` 为根目录 `.env`，填写数据库与 Flask 配置；密码只写本地 `.env`，不要提交。
-2. 导入数据库脚本：现有脚本在 `src/backend/sql/04_init.sql`、`05_存储过程.sql`、`06_测试数据.sql`；Java 配套骨架在 `src/backend/sql/java/`。
+2. 导入数据库脚本：按 `src/backend/sql/04_init.sql` → `05_存储过程.sql` → `06_测试数据.sql` 顺序执行；`src/backend/sql/java/` 下三份脚本是与权威脚本同口径的配套副本。当前远程库已授予 `REFERENCES`，三步脚本已实际执行通过。
 3. 测试 JDBC 连接：
 
 ```bash
@@ -120,9 +168,12 @@ src/frontend/.venv/bin/python -m pytest -q -m "not integration"
 
 # 真实数据库冒烟（需能连上远程 MySQL）
 RUN_DB_INTEGRATION=1 src/frontend/.venv/bin/python -m pytest -q -m integration
+
+# Java 真库集成测试（同样由 RUN_DB_INTEGRATION 门控，默认跳过）
+RUN_DB_INTEGRATION=1 mvn test
 ```
 
-CI 配置在 `.github/workflows/ci.yml`，包含 Java、前端测试和前后端契约三个作业；真实数据库冒烟默认不在 CI 中运行。
+CI 配置在 `.github/workflows/ci.yml`，包含 Java 构建测试、前端测试、前后端契约和 Docker MySQL 真库集成四类作业。真库集成在 Ubuntu 上用临时容器执行，不连接远程库，也不需要向 CI 配置真实数据库密码。
 
 ## 许可
 

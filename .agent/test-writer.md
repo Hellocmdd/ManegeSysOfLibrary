@@ -27,16 +27,17 @@
 
 ## 3. 测试代码规范
 
-- 位置 `src/frontend/tests/`，`test_*.py`，用 `pytest`；依赖写进 `requirements-dev.txt`。
+- 前端测试位置 `src/frontend/tests/`，`test_*.py`，用 `pytest`；依赖写进 `requirements-dev.txt`。
+- 后端单元测试与真库集成测试位置 `src/backend/test/java/`，用 JUnit 5；真库集成类 `com.library.integration.DatabaseIntegrationTest` 由 `RUN_DB_INTEGRATION=1` 门控，默认不连库。
 - 测试里的函数同样要类型注解与 docstring（`python-style.md` 第 2 节），docstring 里写"这个用例覆盖 F 几 + 期望"。
-- 不 mock 数据库：本项目要验证的是真实 SQL 与存储过程；数据库不可用时用 `pytest.mark.skip(reason="init.sql 未补字段：TODO(后端)")`，不写假数据冒充通过。
+- 不 mock 数据库：本项目要验证的是真实 SQL 与存储过程；数据库不可用时用 `pytest.mark.skip(reason="真库不可用：检查 RUN_DB_INTEGRATION=1 与数据库连接")`，不写假数据冒充通过。
 - 用例之间不依赖执行顺序；不依赖上一个用例留下的数据；需要前置数据时在 fixture 里建、在 finalizer 里删，并注明清理方式。
 - 写操作类用例结束后必须恢复基线（或使用专用测试读者/副本，最后删除），不得污染 `06_测试数据.sql` 定义的 10 读者 / 20 图书 / 30 副本 / 15 借阅。
 - 连点/重复提交的用例用一个用例发两次相同请求验证，不靠人工点两下。
 
 ## 4. 手工验证清单（没有自动化时照此执行）
 
-1. 初始化库：`01_建库` → `02_建表` → `03_测试数据`（真实文件名以 `src/backend/sql/` 为准），确认 6 表存在、行数符合基线。
+1. 初始化库：`04_init.sql` → `05_存储过程.sql` → `06_测试数据.sql`，确认 6 表存在、行数符合基线（管理员 10 / 分类 11 / 读者 10 / 书籍 20 / 副本 30 / 借阅 15）。
 2. 启动 `python app.py`，打开首页，确认列表有数据、分页可翻。
 3. 借书：对 C001 借出 → 提示成功、应还日期为 30 天后、列表中该书目可借数 -1。
 4. 异常分支：对 C004（已借出）再借 → 提示"不在馆"；用 R009（禁用读者）借 → 提示"已禁用"。
@@ -49,7 +50,7 @@
 
 ## 5. 阻塞时怎么办
 
-- `04_init.sql` 未补齐字段时，查询会报"未知列"：测试用 `skip` 标注 `TODO(后端): 12/01 init.sql 补字段`，并在 PR 里写明，不得为了让测试变绿而改表或改断言。
+- 真库集成测试已执行通过；不得为了让测试变绿而删外键、改断言或写死数据，后续若再次出现阻塞，报告中必须如实写"未执行 + 阻塞原因"。
 - 环境缺依赖时，先按 `README.md` 的步骤装（`pip install -r requirements.txt`），装不上就报告，不要用 `try/except ImportError` 让测试静默通过。
 
 ## 6. 禁止事项（硬性）

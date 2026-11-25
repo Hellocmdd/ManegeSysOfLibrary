@@ -1,93 +1,67 @@
 package com.library.service;
 
-import com.library.util.DBUtil;
+import com.library.dao.BorrowDAO;
+import com.library.dao.impl.BorrowDAOImpl;
+import com.library.model.BorrowDetail;
+import com.library.model.BorrowOutcome;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.logging.Logger;
+import java.util.List;
+import java.util.Objects;
 
 /**
- * 借阅业务服务：事务边界位于 Service 层。
+ * 借阅业务服务：事务边界在数据库存储过程内，Service 只做调用、复查与异常转换。
  */
 public class BorrowService {
 
-    private static final Logger LOG = Logger.getLogger(BorrowService.class.getName());
+    private final BorrowDAO borrowDAO;
+
+    public BorrowService() {
+        this(new BorrowDAOImpl());
+    }
+
+    BorrowService(BorrowDAO borrowDAO) {
+        this.borrowDAO = Objects.requireNonNull(borrowDAO, "borrowDAO");
+    }
 
     /**
-     * 执行借书事务：校验读者状态、占用副本、写入借阅记录。
-     *
-     * @return 成功返回 true；校验失败或异常回滚后返回 false
+     * 借书：返回码逐分支映射，非 0 一律视为失败。
      */
-    public boolean borrowBook(int readerId, int copyId) {
-        Connection conn = null;
-        boolean oldAutoCommit = false;
+    public BorrowOutcome borrow(String readerId, String copyId) {
         try {
-            conn = DBUtil.getConnection();
-            oldAutoCommit = conn.getAutoCommit();
-            conn.setAutoCommit(false);
-
-            if (!isReaderActive(conn, readerId)) {
-                conn.rollback();
-                return false;
-            }
-
-            String updateCopy = "UPDATE book_copy SET status = 'BORROWED' "
-                    + "WHERE copy_id = ? AND status = 'AVAILABLE'";
-            try (PreparedStatement ps = conn.prepareStatement(updateCopy)) {
-                ps.setInt(1, copyId);
-                if (ps.executeUpdate() != 1) {
-                    conn.rollback();
-                    return false;
-                }
-            }
-
-            String insertRecord = "INSERT INTO borrow_record "
-                    + "(reader_id, copy_id, borrow_date, due_date, status) "
-                    + "VALUES (?, ?, CURDATE(), DATE_ADD(CURDATE(), INTERVAL 30 DAY), 'BORROWED')";
-            try (PreparedStatement ps = conn.prepareStatement(insertRecord)) {
-                ps.setInt(1, readerId);
-                ps.setInt(2, copyId);
-                ps.executeUpdate();
-            }
-
-            conn.commit();
-            return true;
+            return borrowDAO.borrow(readerId, copyId);
         } catch (SQLException e) {
-            LOG.severe("借阅事务失败: " + e.getMessage());
-            rollbackQuietly(conn);
-            return false;
-        } finally {
-            if (conn != null) {
-                try {
-                    conn.setAutoCommit(oldAutoCommit);
-                } catch (SQLException e) {
-                    LOG.warning("恢复 autoCommit 失败: " + e.getMessage());
-                }
-                DBUtil.close(conn);
-            }
+            throw new ServiceException("借书调用失败：" + e.getMessage(), e);
         }
     }
 
-    private boolean isReaderActive(Connection conn, int readerId) throws SQLException {
-        String sql = "SELECT status FROM reader WHERE reader_id = ?";
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, readerId);
-            try (ResultSet rs = ps.executeQuery()) {
-                return rs.next() && "ACTIVE".equals(rs.getString("status"));
-            }
+    /**
+     * 还书：过程可能静默更新 0 行，必须复查记录后判定。
+     */
+    public boolean returnBook(String borrowId, String adminId) {
+        try {
+            return borrowDAO.returnBook(borrowId, adminId);
+        } catch (SQLException e) {
+            throw new ServiceException("还书调用失败：" + e.getMessage(), e);
         }
     }
 
-    private void rollbackQuietly(Connection conn) {
-        if (conn == null) {
-            return;
-        }
+    /**
+     * 续借：比较前后 due_date，避免把静默 0 行误判为成功。
+     */
+    public boolean renewBook(String borrowId) {
         try {
-            conn.rollback();
+            return borrowDAO.renewBook(borrowId);
         } catch (SQLException e) {
-            LOG.severe("事务回滚失败: " + e.getMessage());
+            throw new ServiceException("续借调用失败：" + e.getMessage(), e);
+        }
+    }
+
+    public List<BorrowDetail> history(String readerId) {
+        try {
+            return borrowDAO.findHistoryByReader(readerId);
+        } catch (SQLException e) {
+            throw new ServiceException("查询借阅历史失败：" + e.getMessage(), e);
         }
     }
 }

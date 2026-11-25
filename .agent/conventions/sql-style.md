@@ -68,8 +68,9 @@ WHERE br.return_date IS NULL AND br.due_date < CURDATE()
 
 ## 6. 已知阻塞
 
-- `src/backend/sql/04_init.sql` 目前只建了主键列，其余字段是 `-- TODO`；在补齐之前，任何按完整字段写的查询都会报"未知列"。
-- 遇到这种情况，按 `N1` 处理：**停手并反馈**，不自己改 `04_init.sql`、不自己建表、不改 `06_测试数据.sql` 迁就。
+- 表结构口径阻塞已解除：`04_init.sql` 已按数据字典补齐全部字段与约束，函数默认值写作 `DEFAULT (CURDATE())`，`src/backend/sql/java/` 三份脚本已同步同一口径。
+- 真库阻塞已解除：`REFERENCES` 权限已补授，三步脚本执行通过。过程中发现中文字符串比较必须固定排序规则：过程入参、局部字符串变量、`Borrow.status` 列与 CHECK 字面量均显式使用 `utf8mb4_unicode_ci`，JDBC URL 同步设置 `connectionCollation`。
+- Docker 初始化时每个 SQL 文件使用独立客户端连接；含中文的 `05_存储过程.sql`、`06_测试数据.sql` 与 Java 配套副本开头必须写 `SET NAMES utf8mb4;`，否则会报 `Data truncated for column 'role'`。
 
 ## 7. 禁止事项（硬性）
 

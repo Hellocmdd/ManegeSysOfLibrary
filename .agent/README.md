@@ -38,7 +38,7 @@
 
 ## Java/JDBC 后端规范
 
-`java-jdbc/` 子目录补充 `src/backend/` 下 Java 21 + JDBC 工程的约定，不替代根目录提示词与 `conventions/`。其中表结构清单是开发骨架；若与 `src/backend/sql/*.sql` 或 `conventions/db-contract.md` 的事实不一致，应向组内报告差异，不自行择一执行。
+`java-jdbc/` 子目录补充 `src/backend/` 下 Java 21 + JDBC 工程的约定，不替代根目录提示词与 `conventions/`。其中表结构清单已与 `src/backend/sql/04_init.sql` 同步；若仍与 SQL 或 `conventions/db-contract.md` 不一致，应向组内报告差异，不自行择一执行。
 
 ## 使用方式
 
