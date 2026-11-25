@@ -41,7 +41,7 @@ borrow_book(IN p_reader_id VARCHAR(32), IN p_copy_id VARCHAR(32), OUT p_result I
 | `-3` | 该读者在借已达 5 本 | 已借满 5 本，请先归还 |
 | `-4` | 其他错误（过程内已 `ROLLBACK`） | 借书失败，请稍后重试 |
 
-- 必须用 `CALL borrow_book(%s, %s, @p_result)`，再 `SELECT @p_result`；`src/frontend/README.md` 里的两参写法是旧稿，已失效。
+- 必须用 `CALL borrow_book(%s, %s, @p_result)`，再 `SELECT @p_result`；`docs/08_前端交付物/README.md` 里的两参写法是旧稿，已失效。
 - 借期固定 30 天，由过程计算，前端不自己算 `due_date`。
 
 ### 3.2 `return_book`
