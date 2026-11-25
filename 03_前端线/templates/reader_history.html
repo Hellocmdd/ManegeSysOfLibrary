@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}{{ reader.name }} · 借阅历史{% endblock %}
+
+{% block content %}
+<section class="card">
+  <div class="card-head">
+    <h1>{{ reader.name }} <span class="mono muted">{{ reader.reader_id }}</span></h1>
+    <a class="btn btn-plain" href="{{ url_for('book_list') }}">返回书目</a>
+  </div>
+
+  <dl class="detail">
+    <div><dt>性别</dt><dd>{{ reader.sex }}</dd></div>
+    <div><dt>电话</dt><dd>{{ reader.phone or '—' }}</dd></div>
+    <div><dt>邮箱</dt><dd>{{ reader.email or '—' }}</dd></div>
+    <div><dt>注册日期</dt><dd>{{ reader.reg_date }}</dd></div>
+    <div><dt>状态</dt>
+      <dd>{% if reader.status == 1 %}<span class="badge badge-ok">正常</span>{% else %}<span class="badge badge-warn">禁用</span>{% endif %}</dd>
+    </div>
+  </dl>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th>借阅编号</th>
+        <th>图书</th>
+        <th>副本</th>
+        <th>借出</th>
+        <th>应还</th>
+        <th>归还</th>
+        <th>状态</th>
+        <th>经办</th>
+        <th>操作</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in borrows %}
+      <tr>
+        <td class="mono">{{ row.borrow_id }}</td>
+        <td>{{ row.title }}</td>
+        <td class="mono">{{ row.copy_id }}</td>
+        <td>{{ row.borrow_date }}</td>
+        <td>{{ row.due_date }}</td>
+        <td>{{ row.return_date or '—' }}</td>
+        <td>
+          {% if row.status == '在借' %}
+            {% if row.is_overdue %}<span class="badge badge-err">已逾期</span>
+            {% else %}<span class="badge badge-ok">在借</span>{% endif %}
+          {% else %}
+            <span class="badge">{{ row.status }}</span>
+          {% endif %}
+        </td>
+        <td>{{ row.admin_name or '—' }}</td>
+        <td class="actions">
+          {% if row.return_date is none %}
+          <form method="post" action="{{ url_for('return_book', borrow_id=row.borrow_id) }}" class="inline">
+            <input type="hidden" name="reader_id" value="{{ reader.reader_id }}">
+            <input type="hidden" name="next" value="{{ next }}">
+            <button type="submit" class="btn btn-small">还书</button>
+          </form>
+          <form method="post" action="{{ url_for('renew_book', borrow_id=row.borrow_id) }}" class="inline">
+            <input type="hidden" name="reader_id" value="{{ reader.reader_id }}">
+            <input type="hidden" name="next" value="{{ next }}">
+            <button type="submit" class="btn btn-small btn-plain">续借</button>
+          </form>
+          {% else %}
+          <span class="muted">—</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="9" class="empty">该读者还没有借阅记录。</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

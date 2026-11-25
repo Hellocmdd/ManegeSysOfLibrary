@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}书目查询 · 图书管理系统{% endblock %}
+
+{% block content %}
+<section class="card">
+  <div class="card-head">
+    <h1>书目查询</h1>
+    <span class="meta">共 {{ total }} 种图书 · 第 {{ page }} / {{ total_pages }} 页</span>
+  </div>
+
+  <form method="get" action="{{ url_for('book_list') }}" class="filters">
+    <input type="text" name="title" value="{{ title_kw }}" placeholder="按书名模糊查询">
+    <select name="cat_id">
+      <option value="">全部分类</option>
+      {% for category in categories %}
+      <option value="{{ category.cat_id }}" {% if category.cat_id == cat_id %}selected{% endif %}>
+        {{ '　└ ' if category.parent_id else '' }}{{ category.cat_name }}
+      </option>
+      {% endfor %}
+    </select>
+    <select name="reader_id" onchange="this.form.submit()">
+      <option value="">借书读者（可不选）</option>
+      {% for reader in readers %}
+      <option value="{{ reader.reader_id }}" {% if reader.reader_id == reader_id %}selected{% endif %}>
+        {{ reader.reader_id }} · {{ reader.name }}
+      </option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn">查询</button>
+    <a class="btn btn-plain" href="{{ url_for('book_list') }}">重置</a>
+  </form>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th>编号</th>
+        <th>书名</th>
+        <th>作者</th>
+        <th>出版社</th>
+        <th>分类</th>
+        <th class="num">馆藏</th>
+        <th>可借副本</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for book in books %}
+      {% set available = copies.get(book.book_id, []) %}
+      <tr>
+        <td class="mono">{{ book.book_id }}</td>
+        <td>
+          {{ book.title }}
+          {% if book.isbn %}<div class="sub mono">ISBN {{ book.isbn }}</div>{% endif %}
+        </td>
+        <td>{{ book.author }}</td>
+        <td>{{ book.publisher }}</td>
+        <td>{{ book.cat_name or '—' }}</td>
+        <td class="num">{{ book.copy_available }} / {{ book.copy_total }}</td>
+        <td>
+          {% for copy in available %}
+          <form method="post" action="{{ url_for('borrow') }}" class="inline">
+            <input type="hidden" name="reader_id" value="{{ reader_id }}">
+            <input type="hidden" name="copy_id" value="{{ copy.copy_id }}">
+            <input type="hidden" name="next" value="{{ request.full_path }}">
+            <button type="submit" class="btn btn-small" title="馆藏位置：{{ copy.location }}"
+                    {% if not reader_id %}disabled{% endif %}>{{ copy.copy_id }}</button>
+          </form>
+          {% else %}
+          <span class="muted">暂无可借</span>
+          {% endfor %}
+          {% if not reader_id and available %}
+          <div class="sub muted">先选读者再点副本</div>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="7" class="empty">没有符合条件的图书。</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if total_pages > 1 %}
+  <nav class="pager">
+    {% if page > 1 %}
+    <a class="btn btn-small" href="{{ url_for('book_list', page=page-1, title=title_kw or None, cat_id=cat_id or None, reader_id=reader_id or None) }}">上一页</a>
+    {% endif %}
+    <span class="meta">{{ page }} / {{ total_pages }}</span>
+    {% if page < total_pages %}
+    <a class="btn btn-small" href="{{ url_for('book_list', page=page+1, title=title_kw or None, cat_id=cat_id or None, reader_id=reader_id or None) }}">下一页</a>
+    {% endif %}
+  </nav>
+  {% endif %}
+
+  <p class="hint">借期 {{ borrow_days }} 天，单读者最多在借 {{ borrow_limit }} 本；借阅历史从"读者"入口查看。</p>
+</section>
+{% endblock %}
